@@ -156,14 +156,53 @@ void wrap_file(int file_in, int file_out, int columns)
 int main(int argc, char **argv)
 {
     
-    if (argc > 3 || argc < 2)
+    if (argc > 4 || argc < 2)
     {
         printf("Incorrect number of arguments\n");
         exit(EXIT_FAILURE);
     }
     
-    //Checks if argv[1] is a positive number
-    if(!isdigit((char) argv[1][0]))
+    // Parse argv[1] and assign 
+    if(strncmp(argv[1], "-r", 2)){
+      printf("Invalid argument 1");
+      exit(EXIT_FAILURE);
+    }
+    int a, b;
+    a = b = 0;
+    // Accounts for -r by creating -r1,1
+    if(argv[1] == "-r"){
+        printf("String was -r");
+        a = b = 1;
+    }
+    else{
+        char *token1, *token2;
+        while((token1 = strsep(&argv[1], "-r")) !=  NULL){
+            while((token2 = strsep(&token1, ",")) !=  NULL){
+                if(!a){
+                    a = atoi(token2);
+                }
+                else{
+                    b = atoi(token2);
+                }
+            }
+        }
+        // Accounts for -rN by creating -r1,N
+        if(b = 0){
+            b = a;
+            a = 1;
+        }
+        if(DEBUG){
+          if(a){
+            printf("%d\n", a);
+          }
+          if(b){
+            printf("%d\n", b);
+          }
+        }
+    }
+    
+    //Checks if argv[2] is a positive number
+    if(!isdigit((char) argv[2][0]))
     {
         printf("Invalid width value.\n");
         exit(EXIT_FAILURE);
@@ -171,17 +210,17 @@ int main(int argc, char **argv)
 
     struct stat temp;
     // If second argument is an existing file or directory
-    if (stat(argv[2], &temp) != -1)
+    if (stat(argv[3], &temp) != -1)
     {
         // Second argument is a file that exists
         if (S_ISREG(temp.st_mode))
         {
             if (DEBUG)
             {
-                printf("\nFile '%s' wrapped to STDOUT\n", argv[2]);
+                printf("\nFile '%s' wrapped to STDOUT\n", argv[3]);
             }
-            int inText = open(argv[2], O_RDONLY);
-            wrap_file(inText, 1, atoi(argv[1]));
+            int inText = open(argv[3], O_RDONLY);
+            wrap_file(inText, 1, atoi(argv[2]));
             close(inText);
         }
         // Second argument is a directory that exists
@@ -189,11 +228,11 @@ int main(int argc, char **argv)
         {
             if (DEBUG)
             {
-                printf("\nWrapping files in directory '%s'\n", argv[2]);
+                printf("\nWrapping files in directory '%s'\n", argv[3]);
             }
             struct dirent *f;
-            DIR *fd = opendir(argv[2]);
-            chdir(argv[2]);
+            DIR *fd = opendir(argv[3]);
+            chdir(argv[3]);
             int count = 1;
             while ((f = readdir(fd)) != NULL)
             {
@@ -216,7 +255,7 @@ int main(int argc, char **argv)
                         printf("\n%d: Wrapping file '%s' to '%s'\n", count, f->d_name, newFile);
                     }
                     int outText = open(newFile, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
-                    wrap_file(inText, outText, atoi(argv[1]));
+                    wrap_file(inText, outText, atoi(argv[2]));
                     close(inText);
                     close(outText);
                     free(newFile);
@@ -227,7 +266,7 @@ int main(int argc, char **argv)
         }
     }
     // If second arguments file name does not exist read from STDIN
-    else if (argc == 2)
+    else if (argc == 3)
     {
         char *userStr = malloc(sizeof(char) * INPTSIZE);
 
@@ -257,7 +296,7 @@ int main(int argc, char **argv)
                 printf("\nTemporary file '%s' wrapped to STDOUT\n", tempName);
             }
             int inText = open(tempName, O_RDONLY);
-            wrap_file(inText, 1, atoi(argv[1]));
+            wrap_file(inText, 1, atoi(argv[2]));
             close(inText);
         }
         else{
@@ -271,13 +310,13 @@ int main(int argc, char **argv)
     }
     else
     {
-        if (argc > 3 || argc < 2)
+        if (argc > 4 || argc < 2)
         {
             printf("Error: Not enough arguments");
         }
-        else if ((stat(argv[2], &temp) == -1))
+        else if ((stat(argv[3], &temp) == -1))
         {
-            perror(argv[2]);
+            perror(argv[3]);
         }
         exitCode = EXIT_FAILURE;
     }
