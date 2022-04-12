@@ -21,6 +21,7 @@ struct unbounded_queue
 };
 
 int queue_init(struct unbounded_queue *q);
+int queue_destroy(struct unbounded_queue *q);
 int enqueue(char* n, struct unbounded_queue *q);
 int dequeue(char** n, struct unbounded_queue *q);
 void print_queue(struct unbounded_queue *q);
