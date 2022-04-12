@@ -13,6 +13,7 @@ void navDir(char *a, int b)
 {
     printf("%d: Navigate this folder: %s\n", b - 1, a);
     struct dirent *de;
+    chdir(a);
     DIR *dr = opendir(".");
 
     if (dr == NULL)
@@ -27,24 +28,13 @@ void navDir(char *a, int b)
         {
             if (S_ISREG(temp.st_mode))
             {
-                printf("%d: Wrap this file: %s : %s\n", b, a, de->d_name);
+                printf("Text File: %s\n", de->d_name);
             }
             else if (S_ISDIR(temp.st_mode))
             {
-                char cwd[100];
-                // char *cwd = calloc(100, sizeof(char));
-                if (getcwd(cwd, sizeof(cwd)) != NULL)
-                {
-                    printf("Currently working dir: %s\n", cwd);
-                    chdir(de->d_name);
-                    if (getcwd(cwd, sizeof(cwd)) != NULL)
-                    {
-                        printf("Moving to dir: %s\n", cwd);
-                        navDir(de->d_name, b++);
-                    }
-                    chdir("..");
-                }
-                // free(cwd);
+                printf("Directory: %s\n", de->d_name);
+                navDir(de->d_name, b);
+                chdir("..");
             }
         }
     }
@@ -54,43 +44,6 @@ void navDir(char *a, int b)
 
 int main(void)
 {
-    struct dirent *de;
-    DIR *dr = opendir(".");
-
-    if (dr == NULL)
-    {
-        printf("Null directory");
-        return 0;
-    }
-    while ((de = readdir(dr)) != NULL)
-    {
-        struct stat temp;
-        if (stat(de->d_name, &temp) != -1 && de->d_name[0] != '.')
-        {
-            if (S_ISREG(temp.st_mode))
-            {
-                printf("Wrap this file: %s\n", de->d_name);
-            }
-            else if (S_ISDIR(temp.st_mode))
-            {
-                char cwd[100];
-                // char *cwd = calloc(100, sizeof(char));
-                if (getcwd(cwd, sizeof(cwd)) != NULL)
-                {
-                    printf("Currently working dir: %s\n", cwd);
-                    chdir(de->d_name);
-                    if (getcwd(cwd, sizeof(cwd)) != NULL)
-                    {
-                        printf("Moving to dir: %s\n", cwd);
-                        navDir(de->d_name, 1);
-                    }
-                    chdir("..");
-                }
-                // free(cwd);
-            }
-        }
-    }
-
-    closedir(dr);
+    navDir("test_folder", 1);
     return 0;
 }
