@@ -25,6 +25,16 @@ int queue_init(struct unbounded_queue *q)
     return 0;
 }
 
+// Frees the queue
+int queue_destroy(struct unbounded_queue *q)
+{
+    for (int i = 0; i < QUEUESIZE; i++)
+    {
+        free(q->names[i]);
+    }
+    free(q->names);
+}
+
 // Adds name to the queue
 int enqueue(char *n, struct unbounded_queue *q)
 {
@@ -121,7 +131,7 @@ int main()
     files[0] = ".";
     files[1] = "test_folder";
     files[2] = "test.txt";
-    
+
     for (int i = 0; i < file_num - 1; i++)
     {
         char *path = files[i];

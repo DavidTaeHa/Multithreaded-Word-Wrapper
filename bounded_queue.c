@@ -5,10 +5,10 @@
 #include <limits.h>
 #include "bounded_queue.h"
 
-//int QUEUESIZE = 16;
+// int QUEUESIZE = 16;
 int total_waiting = 0;
 
-//Bounded_queue for the filepaths
+// Bounded_queue for the filepaths
 
 // initializes the queue
 int queue_init(struct bounded_queue *q)
@@ -28,6 +28,16 @@ int queue_init(struct bounded_queue *q)
     pthread_cond_init(&q->enqueue_ready, NULL);
     pthread_cond_init(&q->dequeue_ready, NULL);
     return 0;
+}
+
+//Frees the queue
+int queue_destroy(struct bounded_queue *q)
+{
+    for (int i = 0; i < QUEUESIZE; i++)
+    {
+        free(q->names[i]);
+    }
+    free(q->names);
 }
 
 // Adds name to the queue

@@ -24,6 +24,7 @@ struct bounded_queue
 };
 
 int queue_init(struct bounded_queue *q);
+int queue_destroy(struct bounded_queue *q);
 int enqueue(char* n, struct bounded_queue *q);
 int dequeue(char** n, struct bounded_queue *q);
 void print_queue(struct bounded_queue *q);
