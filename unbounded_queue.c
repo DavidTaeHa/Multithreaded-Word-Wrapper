@@ -106,3 +106,39 @@ void print_queue(struct unbounded_queue *q)
         }
     }
 }
+
+// Test out unbounded_queue
+int main()
+{
+    struct unbounded_queue *temp = malloc(sizeof(struct unbounded_queue));
+    queue_init(temp);
+
+    // Example of modifying path of directory
+    int file_num = 3;
+
+    char **files = malloc(sizeof(char *) * file_num);
+
+    files[0] = ".";
+    files[1] = "test_folder";
+    files[2] = "test.txt";
+    
+    for (int i = 0; i < file_num - 1; i++)
+    {
+        char *path = files[i];
+        char *file = files[i + 1];
+        int plen = strlen(path);
+        int flen = strlen(file);
+        char *newpath = malloc(plen + flen + 2);
+        memcpy(newpath, path, plen);
+        newpath[plen] = '/';
+        memcpy(newpath + plen + 1, file, flen + 1);
+        files[i + 1] = newpath;
+        printf("%s\n", newpath);
+        enqueue(newpath, temp);
+        printf("TESTING\n");
+    }
+
+    // enqueue("boom", temp);
+
+    print_queue(temp);
+}
