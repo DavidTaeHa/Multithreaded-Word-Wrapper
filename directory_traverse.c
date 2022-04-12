@@ -25,11 +25,7 @@ void navDir(char *a, int b, char *filepath)
         struct stat temp;
         if (stat(de->d_name, &temp) != -1 && de->d_name[0] != '.')
         {
-            if (S_ISREG(temp.st_mode))
-            {
-                //printf("Text File: %s\n", de->d_name);
-            }
-            else if (S_ISDIR(temp.st_mode))
+            if (S_ISDIR(temp.st_mode))
             {
                 //Create filepath
                 char *path = filepath;
