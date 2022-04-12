@@ -121,7 +121,6 @@ int main()
     pthread_join(tid, NULL);
     */
     pthread_join(tid, NULL);
-    print_queue();
     // dequeue_old(&phrase, temp);
     //printf("%s\n", dequeue_temp->filename);
 }
