@@ -9,9 +9,8 @@
 #include <ctype.h>
 #include <time.h>
 
-void navDir(char *a, int b)
+void navDir(char *a, int b, char *filepath)
 {
-    printf("%d: Navigate this folder: %s\n", b - 1, a);
     struct dirent *de;
     chdir(a);
     DIR *dr = opendir(".");
@@ -28,12 +27,23 @@ void navDir(char *a, int b)
         {
             if (S_ISREG(temp.st_mode))
             {
-                printf("Text File: %s\n", de->d_name);
+                //printf("Text File: %s\n", de->d_name);
             }
             else if (S_ISDIR(temp.st_mode))
             {
-                printf("Directory: %s\n", de->d_name);
-                navDir(de->d_name, b);
+                //Create filepath
+                char *path = filepath;
+                char *file = de->d_name;
+                int plen = strlen(path);
+                int flen = strlen(file);
+                char *newpath = malloc(plen + flen + 2);
+                memcpy(newpath, path, plen);
+                newpath[plen] = '/';
+                memcpy(newpath + plen + 1, file, flen + 1);
+                printf("%s\n", newpath);
+
+                //Navigate to next folder
+                navDir(de->d_name, b, newpath);
                 chdir("..");
             }
         }
@@ -44,6 +54,6 @@ void navDir(char *a, int b)
 
 int main(void)
 {
-    navDir("test_folder", 1);
+    navDir("test_folder", 1, "./test_folder");
     return 0;
 }
