@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <limits.h>
 
 #ifndef DEBUG
 #define DEBUG 1
@@ -119,8 +120,8 @@ int main()
     //enqueue("I think about it every night and day", temp);
     char *phrase;
     char *phrase2;
-    dequeue(&phrase, temp);
-    dequeue(&phrase2, temp);
+    //dequeue(&phrase, temp);
+    //dequeue(&phrase2, temp);
     print_queue(temp);
     return 0;
 }
