@@ -112,14 +112,16 @@ int main()
     enqueue_temp->filename = "I believe I can fly";
     enqueue_temp->temp_queue = temp;
     pthread_create(&tid, NULL, &enqueue, (void *)enqueue_temp);
+    /*
     char *phrase;
     struct queue_data *dequeue_temp = malloc(sizeof(struct queue_data));
     dequeue_temp->filename = phrase;
     dequeue_temp->temp_queue = temp;
     pthread_create(&tid2, NULL, &dequeue, (void *)dequeue_temp);
     pthread_join(tid, NULL);
-    pthread_join(tid2, NULL);
-    
+    */
+    pthread_join(tid, NULL);
+    print_queue();
     // dequeue_old(&phrase, temp);
-    printf("%s\n", dequeue_temp->filename);
+    //printf("%s\n", dequeue_temp->filename);
 }
