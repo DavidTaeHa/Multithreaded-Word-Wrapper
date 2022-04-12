@@ -3,25 +3,14 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <limits.h>
+#include "unbounded_queue.h"
 
-#ifndef DEBUG
-#define DEBUG 1
-#endif
+int QUEUESIZE = 16;
 
-#define FILEPATH 4096
+// Unbounded_queue for the directory paths
 
-int QUEUESIZE = 2;
-
-// struct defines queue of different names
-struct queue
-{
-    char **names;
-    int start, stop;
-    int isEmpty;
-};
-
-//initializes the queue
-int queue_init(struct queue *q)
+// initializes the queue
+int queue_init(struct unbounded_queue *q)
 {
     q->start = 0;
     q->stop = 0;
@@ -32,12 +21,14 @@ int queue_init(struct queue *q)
         q->names[i] = malloc(sizeof(char) * FILEPATH);
         q->names[i] = NULL;
     }
+    pthread_mutex_init(&q->lock, NULL);
     return 0;
 }
 
-//Adds name to the queue
-int enqueue(char *n, struct queue *q)
+// Adds name to the queue
+int enqueue(char *n, struct unbounded_queue *q)
 {
+    pthread_mutex_lock(&q->lock);
     if (DEBUG)
         printf("Enqueueing \'%s\'...\n", n);
 
@@ -47,7 +38,7 @@ int enqueue(char *n, struct queue *q)
         if (DEBUG)
             printf("Increasing size...\n");
 
-        //Doubles size of queue
+        // Doubles size of queue
         q->names = realloc(q->names, 2 * QUEUESIZE * sizeof(char *));
         for (int i = QUEUESIZE; i < (QUEUESIZE * 2); i++)
         {
@@ -63,24 +54,27 @@ int enqueue(char *n, struct queue *q)
     q->names[q->stop] = n;
     q->stop++;
     printf("%d\n", q->stop);
-
+    pthread_mutex_unlock(&q->lock);
     return 0;
 }
 
-//Dequeues names from the queue
-int dequeue(char **n, struct queue *q)
+// Dequeues names from the queue
+int dequeue(char **n, struct unbounded_queue *q)
 {
+    pthread_mutex_lock(&q->lock);
     if (DEBUG)
         printf("Dequeuing...\n");
 
-    //Checks if queue is empty
-    if(q->stop != q->start){
+    // Checks if queue is empty
+    if (q->stop != q->start)
+    {
         q->isEmpty = 0;
     }
 
     if (q->isEmpty)
     {
-        printf("Queue is empty...\n");
+        if (DEBUG)
+            printf("Queue is empty...\n");
     }
 
     // Dequeues item and increments start of queue
@@ -93,35 +87,22 @@ int dequeue(char **n, struct queue *q)
     {
         q->isEmpty = 1;
     }
+    pthread_mutex_unlock(&q->lock);
     return 0;
 }
 
 // Prints out all elements within the queue for testing
-void print_queue(struct queue *q)
+void print_queue(struct unbounded_queue *q)
 {
     for (int i = 0; i < QUEUESIZE; i++)
     {
-        if(q->names[i] == NULL){
+        if (q->names[i] == NULL)
+        {
             printf("(EMPTY)\n");
         }
-        else{
+        else
+        {
             printf("%s\n", q->names[i]);
         }
     }
-}
-
-// testing out queue
-int main()
-{
-    struct queue *temp = malloc(sizeof(struct queue));
-    queue_init(temp);
-    enqueue("I believe I can fly", temp);
-    enqueue("I believe I can touch the sky", temp);
-    //enqueue("I think about it every night and day", temp);
-    char *phrase;
-    char *phrase2;
-    //dequeue(&phrase, temp);
-    //dequeue(&phrase2, temp);
-    print_queue(temp);
-    return 0;
 }

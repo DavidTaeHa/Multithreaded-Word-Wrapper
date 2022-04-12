@@ -3,36 +3,21 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <limits.h>
+#include "bounded_queue.h"
 
-#ifndef DEBUG
-#define DEBUG 1
-#endif
+//int QUEUESIZE = 16;
+int total_waiting = 0;
 
-#define FILEPATH 4096
-
-int QUEUESIZE = 16;
-
-struct queue
-{
-    char **names;
-    int start, stop;
-    int full;
-    pthread_mutex_t lock;
-    pthread_cond_t enqueue_ready, dequeue_ready;
-};
-
-struct queue_data
-{
-    char *filename;
-    struct queue *temp_queue;
-};
+//Bounded_queue for the filepaths
 
 // initializes the queue
-int queue_init(struct queue *q)
+int queue_init(struct bounded_queue *q)
 {
     q->start = 0;
     q->stop = 0;
     q->full = 0;
+    q->wait_status = 0;
+    q->capacity = 0;
     q->names = malloc(sizeof(char *) * QUEUESIZE);
     for (int i = 0; i < QUEUESIZE; i++)
     {
@@ -46,7 +31,7 @@ int queue_init(struct queue *q)
 }
 
 // Adds name to the queue
-int enqueue(char* n, struct queue *q)
+int enqueue(char *n, struct bounded_queue *q)
 {
     pthread_mutex_lock(&q->lock);
     while (q->full)
@@ -55,6 +40,7 @@ int enqueue(char* n, struct queue *q)
     }
     q->names[q->stop] = n;
     q->stop++;
+    q->capacity++;
     if (q->stop == QUEUESIZE)
         q->stop = 0;
     if (q->start == q->stop)
@@ -65,15 +51,26 @@ int enqueue(char* n, struct queue *q)
 }
 
 // Dequeues names from the queue
-int dequeue(char** n, struct queue *q)
+int dequeue(char **n, struct bounded_queue *q)
 {
     pthread_mutex_lock(&q->lock);
     while (!q->full && q->start == q->stop)
     {
+        if (q->wait_status == 0)
+        {
+            q->wait_status = 1;
+            total_waiting++;
+        }
         pthread_cond_wait(&q->dequeue_ready, &q->lock);
+    }
+    if (q->wait_status == 1)
+    {
+        q->wait_status = 0;
+        total_waiting--;
     }
     *n = q->names[q->start];
     q->start++;
+    q->capacity--;
     if (q->start == QUEUESIZE)
         q->start == 0;
     q->full = 0;
@@ -83,7 +80,7 @@ int dequeue(char** n, struct queue *q)
 }
 
 // Prints out all elements within the queue for testing
-void print_queue(struct queue *q)
+void print_queue(struct bounded_queue *q)
 {
     for (int i = 0; i < QUEUESIZE; i++)
     {
@@ -96,9 +93,4 @@ void print_queue(struct queue *q)
             printf("%s\n", q->names[i]);
         }
     }
-}
-
-int main()
-{
-
 }
