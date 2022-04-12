@@ -21,6 +21,13 @@ struct queue
     pthread_cond_t enqueue_ready, dequeue_ready;
 };
 
+struct queue_data
+{
+    char *filename;
+    struct queue *temp_queue;
+};
+
+// initializes the queue
 int queue_init(struct queue *q)
 {
     q->start = 0;
@@ -38,8 +45,12 @@ int queue_init(struct queue *q)
     return 0;
 }
 
-int enqueue(int n, struct queue *q)
+// Adds name to the queue
+void *enqueue(void *arguments)
 {
+    struct queue_data *data = (struct queue_data *)arguments;
+    char *n = data->filename;
+    struct queue *q = data->temp_queue;
     pthread_mutex_lock(&q->lock);
     while (q->full)
     {
@@ -53,11 +64,14 @@ int enqueue(int n, struct queue *q)
         q->full = 1;
     pthread_cond_signal(&q->dequeue_ready);
     pthread_mutex_unlock(&q->lock);
-    return 0;
 }
 
-int dequeue(int *n, struct queue *q)
+// Dequeues names from the queue
+void *dequeue(void *arguments)
 {
+    struct queue_data *data = (struct queue_data *)arguments;
+    char **n = &data->filename;
+    struct queue *q = data->temp_queue;
     pthread_mutex_lock(&q->lock);
     while (!q->full && q->start == q->stop)
     {
@@ -68,12 +82,44 @@ int dequeue(int *n, struct queue *q)
     if (q->start == QUEUESIZE)
         q->start == 0;
     q->full = 0;
-    pthread_signal(&q->enqueue_ready);
+    pthread_cond_signal(&q->enqueue_ready);
     pthread_mutex_unlock(&q->lock);
-    return 0;
 }
 
-int main(){
+// Prints out all elements within the queue for testing
+void print_queue(struct queue *q)
+{
+    for (int i = 0; i < QUEUESIZE; i++)
+    {
+        if (q->names[i] == NULL)
+        {
+            printf("(EMPTY)\n");
+        }
+        else
+        {
+            printf("%s\n", q->names[i]);
+        }
+    }
+}
+
+int main()
+{
+    pthread_t tid;
+    pthread_t tid2;
     struct queue *temp = malloc(sizeof(struct queue));
     queue_init(temp);
+    struct queue_data *enqueue_temp = malloc(sizeof(struct queue_data));
+    enqueue_temp->filename = "I believe I can fly";
+    enqueue_temp->temp_queue = temp;
+    pthread_create(&tid, NULL, &enqueue, (void *)enqueue_temp);
+    char *phrase;
+    struct queue_data *dequeue_temp = malloc(sizeof(struct queue_data));
+    dequeue_temp->filename = phrase;
+    dequeue_temp->temp_queue = temp;
+    pthread_create(&tid2, NULL, &dequeue, (void *)dequeue_temp);
+    pthread_join(tid, NULL);
+    pthread_join(tid2, NULL);
+    
+    // dequeue_old(&phrase, temp);
+    printf("%s\n", dequeue_temp->filename);
 }

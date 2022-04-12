@@ -96,7 +96,7 @@ int dequeue(char **n, struct queue *q)
     return 0;
 }
 
-// Prints out all elements within the queue
+// Prints out all elements within the queue for testing
 void print_queue(struct queue *q)
 {
     for (int i = 0; i < QUEUESIZE; i++)
