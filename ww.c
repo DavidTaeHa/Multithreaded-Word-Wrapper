@@ -153,6 +153,70 @@ void wrap_file(int file_in, int file_out, int columns)
     free(buf);
 }
 
+void navDir(char *a, int b, int c){
+    if(DEBUG){
+		printf("DB: %d - Navigate this folder: %s\n", b-1, a);
+	}
+    struct dirent *de;
+    DIR *dr = opendir(".");
+
+    if(dr == NULL){
+        if(DEBUG){
+			printf("DB: %d - Empty directory: %s\n", b, a);
+		}
+        return;
+    }
+    while ((de = readdir(dr)) != NULL){
+        struct stat temp;
+        if(stat(de->d_name, &temp) != -1 && de->d_name[0] != '.'){
+            if(S_ISREG(temp.st_mode)){
+                if(de->d_name[0] == '.'){
+					return;
+				}
+				else if(strstr(de->d_name, "wrap.") == de->d_name){
+					return;
+				}
+				else if(strstr(de->d_name, ".txt")){
+					if(DEBUG){
+						printf("DB: %d - Wrapping file: %s : %s\n", b, a, de->d_name);
+					}
+					int inText = open(de->d_name, O_RDONLY);
+            		char *newFile = calloc(strlen(de->d_name) + 6, sizeof(char));
+                    strcpy(newFile, "wrap.");
+                    strcat(newFile, de->d_name);
+                    if (DEBUG)
+                    {
+                        printf("DB: Wrapping file '%s' to '%s'\n", de->d_name, newFile);
+                    }
+                    int outText = open(newFile, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
+                    wrap_file(inText, outText, c);
+                    close(inText);
+                    close(outText);
+                    free(newFile);
+				}
+            }
+            else if(S_ISDIR(temp.st_mode)){
+                char cwd[INPTSIZE];
+                if(getcwd(cwd, sizeof(cwd)) != NULL){
+                    if(DEBUG){
+						printf("DB: Currently working dir: %s\n", cwd);
+					}
+                    chdir(de->d_name);
+                    if(getcwd(cwd, sizeof(cwd)) != NULL){
+                        if(DEBUG){
+							printf("DB: Moving to dir: %s\n", cwd);
+						}
+                        navDir(de->d_name, b++, c);
+                    }
+                    chdir("..");
+                }
+            }
+        }
+    }
+    closedir(dr);
+    return;
+}
+
 int main(int argc, char **argv)
 {
     
@@ -167,36 +231,36 @@ int main(int argc, char **argv)
       printf("Invalid argument 1");
       exit(EXIT_FAILURE);
     }
-    int a, b;
-    a = b = 0;
+    int digM, digN;
+    digM = digN = -1;
     // Accounts for -r by creating -r1,1
-    if(argv[1] == "-r"){
-        printf("String was -r");
-        a = b = 1;
+    if((argv[1] = "-r") && strlen(argv[1]) == 2){
+        digM = 1;
+		digN = 1;
     }
     else{
         char *token1, *token2;
         while((token1 = strsep(&argv[1], "-r")) !=  NULL){
             while((token2 = strsep(&token1, ",")) !=  NULL){
-                if(!a){
-                    a = atoi(token2);
+                if(!digM){
+                    digM = atoi(token2);
                 }
                 else{
-                    b = atoi(token2);
+                    digN = atoi(token2);
                 }
             }
         }
         // Accounts for -rN by creating -r1,N
-        if(b = 0){
-            b = a;
-            a = 1;
+        if(digN = -1){
+            digN = digM;
+            digM = 1;
         }
         if(DEBUG){
-          if(a){
-            printf("%d\n", a);
+          if(digM){
+            printf("DB: Value of M: %d\n", digM);
           }
-          if(b){
-            printf("%d\n", b);
+          if(digN){
+            printf("DB: Value of N: %d\n", digN);
           }
         }
     }
@@ -233,35 +297,35 @@ int main(int argc, char **argv)
             struct dirent *f;
             DIR *fd = opendir(argv[3]);
             chdir(argv[3]);
-            int count = 1;
-            while ((f = readdir(fd)) != NULL)
-            {
-                if (f->d_name[0] == '.')
-                {
-                    printf("Skipping: '%s'\n", f->d_name);
-                }
-                else if (strstr(f->d_name, "wrap.") == f->d_name)
-                {
-                    printf("File to overwrite: '%s'\n", f->d_name);
-                }
-                else if (strstr(f->d_name, ".txt"))
-                {
-                    int inText = open(f->d_name, O_RDONLY);
-                    char *newFile = calloc(strlen(f->d_name) + 6, sizeof(char));
-                    strcpy(newFile, "wrap.");
-                    strcat(newFile, f->d_name);
-                    if (DEBUG)
-                    {
-                        printf("\n%d: Wrapping file '%s' to '%s'\n", count, f->d_name, newFile);
-                    }
-                    int outText = open(newFile, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
-                    wrap_file(inText, outText, atoi(argv[2]));
-                    close(inText);
-                    close(outText);
-                    free(newFile);
-                    count++;
-                }
-            }
+
+			if(fd == NULL){
+				if(DEBUG){
+					printf("DB: Empty directory");
+					return exitCode;
+				}
+			}			
+			// Project 3 Part 1: M = 1, N = 1
+			if(digM = 1 && digN == 1)
+			{
+				if(DEBUG){
+					printf("DB: M = %d, N = %d", digM, digN);
+				}
+				navDir(f->d_name, 1, atoi(argv[2]));
+			}
+			// PROJECT 3 Part 2: M = 1, N != 1
+			else if(digM == 1){
+				if(DEBUG){
+					printf("DB: M = %d, N = %d", digM, digN);
+				}
+				return exitCode;
+			}
+			// Project 3 Part 3: M != 1, N != 1
+			else{
+				if(DEBUG){
+					printf("DB: M = %d, N = %d", digM, digN);
+				}
+				return exitCode;
+			}
             closedir(fd);
         }
     }
