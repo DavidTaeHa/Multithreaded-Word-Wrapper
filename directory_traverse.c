@@ -142,7 +142,6 @@ int main()
     unbound_print(dir_queue);
     unbound_destroy(dir_queue);
     free(dir_queue);
-    printf("Boom shaka laka\n");
     return 0;
 }
 // gcc directory_traverse.c unbounded_queue.c bounded_queue.c
