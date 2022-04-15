@@ -20,8 +20,8 @@ struct unbounded_queue
     pthread_mutex_t lock;
 };
 
-int queue_init(struct unbounded_queue *q);
-int queue_destroy(struct unbounded_queue *q);
-int enqueue(char* n, struct unbounded_queue *q);
-int dequeue(char** n, struct unbounded_queue *q);
-void print_queue(struct unbounded_queue *q);
+int unbound_init(struct unbounded_queue *q);
+int unbound_destroy(struct unbounded_queue *q);
+int unbound_enqueue(char* n, struct unbounded_queue *q);
+int unbound_dequeue(char** n, struct unbounded_queue *q);
+void unbound_print(struct unbounded_queue *q);

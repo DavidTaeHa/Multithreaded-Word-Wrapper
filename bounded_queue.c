@@ -11,7 +11,7 @@ int total_waiting = 0;
 // Bounded_queue for the filepaths
 
 // initializes the queue
-int queue_init(struct bounded_queue *q)
+int bound_init(struct bounded_queue *q)
 {
     q->start = 0;
     q->stop = 0;
@@ -31,7 +31,7 @@ int queue_init(struct bounded_queue *q)
 }
 
 //Frees the queue
-int queue_destroy(struct bounded_queue *q)
+int bound_destroy(struct bounded_queue *q)
 {
     for (int i = 0; i < QUEUESIZE; i++)
     {
@@ -41,7 +41,7 @@ int queue_destroy(struct bounded_queue *q)
 }
 
 // Adds name to the queue
-int enqueue(char *n, struct bounded_queue *q)
+int bound_enqueue(char *n, struct bounded_queue *q)
 {
     pthread_mutex_lock(&q->lock);
     while (q->full)
@@ -61,7 +61,7 @@ int enqueue(char *n, struct bounded_queue *q)
 }
 
 // Dequeues names from the queue
-int dequeue(char **n, struct bounded_queue *q)
+int bound_dequeue(char **n, struct bounded_queue *q)
 {
     pthread_mutex_lock(&q->lock);
     while (!q->full && q->start == q->stop)
@@ -90,7 +90,7 @@ int dequeue(char **n, struct bounded_queue *q)
 }
 
 // Prints out all elements within the queue for testing
-void print_queue(struct bounded_queue *q)
+void bound_print(struct bounded_queue *q)
 {
     for (int i = 0; i < QUEUESIZE; i++)
     {

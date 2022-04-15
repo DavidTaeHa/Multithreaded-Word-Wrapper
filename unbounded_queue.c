@@ -10,7 +10,7 @@ int QUEUESIZE = 16;
 // Unbounded_queue for the directory paths
 
 // initializes the queue
-int queue_init(struct unbounded_queue *q)
+int unbound_init(struct unbounded_queue *q)
 {
     q->start = 0;
     q->stop = 0;
@@ -18,7 +18,6 @@ int queue_init(struct unbounded_queue *q)
     q->names = malloc(sizeof(char *) * QUEUESIZE);
     for (int i = 0; i < QUEUESIZE; i++)
     {
-        q->names[i] = malloc(sizeof(char) * FILEPATH);
         q->names[i] = NULL;
     }
     pthread_mutex_init(&q->lock, NULL);
@@ -26,17 +25,21 @@ int queue_init(struct unbounded_queue *q)
 }
 
 // Frees the queue
-int queue_destroy(struct unbounded_queue *q)
+int unbound_destroy(struct unbounded_queue *q)
 {
-    for (int i = 0; i < QUEUESIZE; i++)
+    for (int i = 1; i < QUEUESIZE; i++)
     {
-        free(q->names[i]);
+        if (q->names[i] != NULL)
+        {
+            free(q->names[i]);
+        }
     }
     free(q->names);
+    pthread_mutex_destroy(&q->lock);
 }
 
 // Adds name to the queue
-int enqueue(char *n, struct unbounded_queue *q)
+int unbound_enqueue(char *n, struct unbounded_queue *q)
 {
     pthread_mutex_lock(&q->lock);
     if (DEBUG)
@@ -52,7 +55,6 @@ int enqueue(char *n, struct unbounded_queue *q)
         q->names = realloc(q->names, 2 * QUEUESIZE * sizeof(char *));
         for (int i = QUEUESIZE; i < (QUEUESIZE * 2); i++)
         {
-            q->names[i] = malloc(sizeof(char) * FILEPATH);
             q->names[i] = NULL;
         }
 
@@ -63,13 +65,12 @@ int enqueue(char *n, struct unbounded_queue *q)
     // Adds item to the queue and increments end of queue
     q->names[q->stop] = n;
     q->stop++;
-    printf("%d\n", q->stop);
     pthread_mutex_unlock(&q->lock);
     return 0;
 }
 
 // Dequeues names from the queue
-int dequeue(char **n, struct unbounded_queue *q)
+int unbound_dequeue(char **n, struct unbounded_queue *q)
 {
     pthread_mutex_lock(&q->lock);
     if (DEBUG)
@@ -89,7 +90,6 @@ int dequeue(char **n, struct unbounded_queue *q)
 
     // Dequeues item and increments start of queue
     *n = q->names[q->start];
-    q->names[q->start] = NULL;
     q->start++;
 
     // Checks if queue is empty
@@ -102,8 +102,9 @@ int dequeue(char **n, struct unbounded_queue *q)
 }
 
 // Prints out all elements within the queue for testing
-void print_queue(struct unbounded_queue *q)
+void unbound_print(struct unbounded_queue *q)
 {
+    printf("Printing list...\n");
     for (int i = 0; i < QUEUESIZE; i++)
     {
         if (q->names[i] == NULL)
@@ -117,38 +118,23 @@ void print_queue(struct unbounded_queue *q)
     }
 }
 
-// Test out unbounded_queue
-int main()
-{
+/*
+int main(){
     struct unbounded_queue *temp = malloc(sizeof(struct unbounded_queue));
-    queue_init(temp);
+    unbound_init(temp);
 
-    // Example of modifying path of directory
-    int file_num = 3;
+    char *path = "boom";
+    char *file = "shaka";
+    int plen = strlen(path);
+    int flen = strlen(file);
+    char *newpath = malloc(plen + flen + 2);
+    memcpy(newpath, path, plen);
+    newpath[plen] = '/';
+    memcpy(newpath + plen + 1, file, flen + 1);
+    unbound_enqueue(newpath,temp);
 
-    char **files = malloc(sizeof(char *) * file_num);
-
-    files[0] = ".";
-    files[1] = "test_folder";
-    files[2] = "test.txt";
-
-    for (int i = 0; i < file_num - 1; i++)
-    {
-        char *path = files[i];
-        char *file = files[i + 1];
-        int plen = strlen(path);
-        int flen = strlen(file);
-        char *newpath = malloc(plen + flen + 2);
-        memcpy(newpath, path, plen);
-        newpath[plen] = '/';
-        memcpy(newpath + plen + 1, file, flen + 1);
-        files[i + 1] = newpath;
-        printf("%s\n", newpath);
-        enqueue(newpath, temp);
-        printf("TESTING\n");
-    }
-
-    // enqueue("boom", temp);
-
-    print_queue(temp);
+    unbound_print(temp);
+    unbound_destroy(temp);
+    free(temp);
 }
+*/
