@@ -10,9 +10,9 @@
 #include <time.h>
 #include <pthread.h>
 #include "unbounded_queue.h"
-#include "bounded_queue.h"
 
 struct unbounded_queue *dir_queue;
+int thread_count = 5;
 
 // This version of the method traverse recursively through all of the subdirectories
 /*
@@ -89,15 +89,19 @@ void navDir(char *a, struct unbounded_queue *q)
         {
             if (S_ISREG(temp.st_mode) && strstr(de->d_name, "wrap.") != de->d_name && strstr(de->d_name, ".txt"))
             {
-                printf("%s\n", newpath);
+                // printf("%s\n", newpath);
                 free(newpath);
                 // NOTE: add code to add the text file path to the file queue and remove free statement later
             }
             else if (S_ISDIR(temp.st_mode))
             {
                 // NOTE: add code to add the directory file path to the  directory queue
-                unbound_enqueue(newpath, q);
-                printf("%s\n", newpath);
+                int val = unbound_enqueue(newpath, q);
+                if (val == 1)
+                {
+                    free(newpath);
+                }
+                // printf("%s\n", newpath);
             }
             else
             {
@@ -117,31 +121,48 @@ void *directory_worker(void *args)
 {
     struct unbounded_queue *temp = (struct unbounded_queue *)args;
     char *dir_name;
-    unbound_dequeue(&dir_name, dir_queue);
-    printf("DEQUEUE: %s\n", dir_name);
-    navDir(dir_name, dir_queue);
+    while (dir_queue->isEmpty == 0 || dir_queue->total_waiting < thread_count)
+    {
+        unbound_dequeue(&dir_name, dir_queue);
+        navDir(dir_name, dir_queue);
+        if (dir_queue->isEmpty == 1 && dir_queue->total_waiting == thread_count)
+        {
+            printf("EXIT\n");
+            break;
+        }
+        printf("OUTSIDEWaiting: %d\n", dir_queue->total_waiting);
+        printf("OUTSIDEEmpty status: %d\n", dir_queue->isEmpty);
+    }
 }
+// && dir_queue->total_waiting < 1
 
 int main()
 {
-    pthread_t pid, pid2;
+    pthread_t pid, pid2, pid3, pid4, pid5;
     dir_queue = malloc(sizeof(struct unbounded_queue));
-    unbound_init(dir_queue);
+    unbound_init(dir_queue, thread_count);
+    printf("Empty status: %d\n", dir_queue->isEmpty);
     char *dir = "./test_folder";
     unbound_enqueue(dir, dir_queue);
     // navDir(dir, dir_queue);
 
     pthread_create(&pid, NULL, directory_worker, dir_queue);
-    pthread_join(pid, NULL);
-
-    unbound_print(dir_queue);
-
     pthread_create(&pid2, NULL, directory_worker, dir_queue);
+    pthread_create(&pid3, NULL, directory_worker, dir_queue);
+    pthread_create(&pid4, NULL, directory_worker, dir_queue);
+    pthread_create(&pid5, NULL, directory_worker, dir_queue);
+
+    pthread_join(pid, NULL);
     pthread_join(pid2, NULL);
+    pthread_join(pid3, NULL);
+    pthread_join(pid4, NULL);
+    pthread_join(pid5, NULL);
+
     // Might be error here, some iterations do not pass this line
     unbound_print(dir_queue);
     unbound_destroy(dir_queue);
     free(dir_queue);
     return 0;
 }
-// gcc directory_traverse.c unbounded_queue.c bounded_queue.c
+// gcc -fsanitize=address,undefined directory_traverse.c unbounded_queue.c
+//  gcc directory_traverse.c unbounded_queue.c bounded_queue.c
