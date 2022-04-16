@@ -83,6 +83,7 @@ int unbound_enqueue(char *n, struct unbounded_queue *q)
 // Dequeues names from the queue
 int unbound_dequeue(char **n, struct unbounded_queue *q)
 {
+    usleep(10000);
     pthread_mutex_lock(&q->lock);
     if (DEBUG)
         printf("Dequeueing \'%s\'...\n", *n);
@@ -103,7 +104,7 @@ int unbound_dequeue(char **n, struct unbounded_queue *q)
         {
             // All threads are waiting
             printf("ALL THREADS WAITING AND QUEUE IS EMPTY\n");
-            pthread_cond_broadcast(&q->dequeue_ready);
+            pthread_cond_signal(&q->dequeue_ready);
             pthread_mutex_unlock(&q->lock);
             return 0;
         }
