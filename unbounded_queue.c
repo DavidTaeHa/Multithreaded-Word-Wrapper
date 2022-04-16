@@ -46,11 +46,7 @@ int unbound_destroy(struct unbounded_queue *q)
 int unbound_enqueue(char *n, struct unbounded_queue *q)
 {
     pthread_mutex_lock(&q->lock);
-    if (q->total_waiting == q->thread_count)
-    {
-        pthread_mutex_unlock(&q->lock);
-        return 1;
-    }
+    int return_result = 1;
     if (DEBUG)
         printf("Enqueueing \'%s\'...\n", n);
 
@@ -77,10 +73,11 @@ int unbound_enqueue(char *n, struct unbounded_queue *q)
         q->names[q->stop] = n;
         q->stop++;
         q->isEmpty = 0;
+        return_result = 0;
     }
     pthread_cond_signal(&q->dequeue_ready);
     pthread_mutex_unlock(&q->lock);
-    return 0;
+    return return_result;
 }
 
 // Dequeues names from the queue
