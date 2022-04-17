@@ -9,7 +9,9 @@
 #include <ctype.h>
 #include <time.h>
 #include <pthread.h>
+#include "bounded_queue.h"
 #include "unbounded_queue.h"
+
 
 #ifndef DEBUG
 #define DEBUG 0
@@ -23,10 +25,8 @@
 static int exitCode = EXIT_SUCCESS;
 
 struct unbounded_queue *dir_queue;
-struct unbounded_queue *file_queue;
+struct bounded_queue *file_queue;
 int thread_count = 5;
-int finished = 0;
-int columns = 15;
 
 void wrap_file(int file_in, int file_out, int columns)
 {
@@ -201,7 +201,7 @@ void procDir(char *a, int columns, struct unbounded_queue *qDir, struct unbounde
 // just print for now
 
 // This version only traverses through current given directory
-void navDir(char *a, struct unbounded_queue *q, struct unbounded_queue *r)
+void navDir(char *a, struct unbounded_queue *q, struct bounded_queue *r)
 {// example input: ./foldera
     struct dirent *de;
     DIR *dr = opendir(a);
@@ -231,7 +231,7 @@ void navDir(char *a, struct unbounded_queue *q, struct unbounded_queue *r)
             if (S_ISREG(temp.st_mode) && strstr(de->d_name, "wrap.") != de->d_name && strstr(de->d_name, ".txt"))
             {
                 // printf("%s\n", newpath);
-                int val = unbound_enqueue(newpath, r);
+                int val = bound_enqueue(newpath, r);
                 if (val == 1)
                 {
                     free(newpath);
@@ -276,37 +276,16 @@ void *directory_worker(void *args)
     printf("FINISH!\n");
     if (dir_queue->isEmpty == 1 && dir_queue->total_waiting == thread_count)
     {
-        //file_queue->dir_finished = 1;
+        file_queue->dir_finished = 1;
     }
 }
-
-/*
-void *directory_worker(void *args)
-{
-    char *dir_name;
-    while (dir_queue->isEmpty == 0 || dir_queue->total_waiting < thread_count)
-    {
-        unbound_dequeue(&dir_name, dir_queue);
-        procDir(dir_name, 15, dir_queue, file_queue);
-        // printf("OUTSIDEWaiting: %d\n", dir_queue->total_waiting);
-        // printf("OUTSIDEEmpty status: %d\n", dir_queue->isEmpty);
-    }
-    printf("FINISH!\n");
-    if (dir_queue->isEmpty == 1 && dir_queue->total_waiting == thread_count)
-    {
-        // file_queue->dir_finished = 1;
-    }
-}
-*/
 
 void *file_worker(void *args)
 {
     char *file_name;
-    while (finished == 0 && (file_queue->isEmpty == 0 || file_queue->total_waiting < thread_count))
+    while (file_queue->dir_finished == 0 || file_queue->isEmpty == 0)
     {
-        printf("OUTSIDE Waiting: %d\n", file_queue->total_waiting);
-        printf("OUTSIDE Empty status: %d\n", file_queue->isEmpty);
-        unbound_dequeue(&file_name, file_queue);
+        bound_dequeue(&file_name, file_queue);
         // int inText = open(file_name, O_RDONLY);
         printf("--------INPUT FILE: %s\n", file_name);
 
@@ -314,11 +293,6 @@ void *file_worker(void *args)
         // wrap_file(inText, outText, 15);
         // close(inText);
         // close(outText);
-        if (file_queue->isEmpty == 1 && file_queue->total_waiting == thread_count)
-        {
-            printf("EXIT FROM FILE WORKER\n");
-            break;
-        }
     }
     printf("!!!!!!!!!!!!!!!!!!!!!!!!\n");
 }
@@ -329,9 +303,9 @@ int main()
 
     pthread_t pid, pid2, pid3, pid4, pid5, pid6;
     dir_queue = malloc(sizeof(struct unbounded_queue));
-    file_queue = malloc(sizeof(struct unbounded_queue));
+    file_queue = malloc(sizeof(struct bounded_queue));
     unbound_init(dir_queue, thread_count);
-    unbound_init(file_queue, 2);
+    bound_init(file_queue);
     
     char *path = ".";
     char *file = "foldera";
@@ -364,10 +338,10 @@ int main()
     unbound_print(dir_queue);
     unbound_destroy(dir_queue);
     free(dir_queue);
-    unbound_print(file_queue);
-    unbound_destroy(file_queue);
+    bound_print(file_queue);
+    bound_destroy(file_queue);
     free(file_queue);
     return 0;
 }
 // gcc -fsanitize=address,undefined directory_traverse.c unbounded_queue.c
-//  gcc directory_traverse.c unbounded_queue.c
+//  gcc directory_traverse.c unbounded_queue.c bounded_queue.c

@@ -16,6 +16,7 @@ struct bounded_queue
     char **names;
     int start, stop;
     int full;
+    int isEmpty;
     int dir_finished;
     pthread_mutex_t lock;
     pthread_cond_t enqueue_ready, dequeue_ready;

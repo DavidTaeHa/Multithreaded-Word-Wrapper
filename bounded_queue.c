@@ -16,6 +16,7 @@ int bound_init(struct bounded_queue *q)
     q->start = 0;
     q->stop = 0;
     q->full = 0;
+    q->isEmpty = 1;
     q->names = malloc(sizeof(char *) * MAXSIZE);
     for (int i = 0; i < MAXSIZE; i++)
     {
@@ -57,6 +58,7 @@ int bound_enqueue(char *n, struct bounded_queue *q)
         q->stop = 0;
     if (q->start == q->stop)
         q->full = 1;
+    q->isEmpty = 0;
     pthread_cond_signal(&q->dequeue_ready);
     pthread_mutex_unlock(&q->lock);
     return 0;
@@ -66,12 +68,24 @@ int bound_enqueue(char *n, struct bounded_queue *q)
 int bound_dequeue(char **n, struct bounded_queue *q)
 {
     pthread_mutex_lock(&q->lock);
+
     while (!q->full && q->start == q->stop)
     {
+        //Directory traversal is finished and bounded queue is empty
+        if(q->dir_finished == 1){
+            printf("DIRECTORY TRAVERSAL IS FINISHED\n");
+            pthread_cond_broadcast(&q->dequeue_ready);
+            pthread_mutex_unlock(&q->lock);
+            return 0;
+        }
         pthread_cond_wait(&q->dequeue_ready, &q->lock);
     }
     *n = q->names[q->start];
     q->start++;
+
+    if(!q->full && q->start == q->stop){
+        q->isEmpty = 1;
+    }
 
     pthread_cond_signal(&q->enqueue_ready);
     pthread_mutex_unlock(&q->lock);
@@ -93,7 +107,7 @@ void bound_print(struct bounded_queue *q)
         }
     }
 }
-
+/*
 int main()
 {
     struct bounded_queue *temp = malloc(sizeof(struct bounded_queue));
@@ -113,3 +127,5 @@ int main()
     bound_destroy(temp);
     free(temp);
 }
+*/
+//gcc bounded_queue.c
