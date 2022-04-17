@@ -269,20 +269,10 @@ void *directory_worker(void *args)
     // Work on the directory queue while it is not empty or the number of waiting threads is less than total threads
     while (dir_queue->isEmpty == 0 || dir_queue->total_waiting < thread_count)
     {
-        // directory queue is empty and number of total waiting threads is about to go up to max counts
-        /*
-        if (dir_queue->isEmpty == 1 || dir_queue->total_waiting == thread_count)
-        {
-            pthread_cond_broadcast(&dir_queue->dequeue_ready);
-            pthread_mutex_unlock(&dir_queue->lock);
-            break;
-        }
-        */
         unbound_dequeue(&dir_name, dir_queue);
         if (dir_queue->isEmpty == 1 && dir_queue->total_waiting == thread_count)
         {
             printf("DIRECTORY QUEUE FINISHED!\n");
-            pthread_cond_broadcast(&dir_queue->dequeue_ready);
             break;
         }
         navDir(dir_name, dir_queue, file_queue);
