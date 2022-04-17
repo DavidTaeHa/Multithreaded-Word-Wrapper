@@ -22,7 +22,7 @@ struct file_queue
     pthread_cond_t dequeue_ready;
 };
 
-int file_init(struct file_queue *q, int count);
+int file_init(struct file_queue *q);
 int file_destroy(struct file_queue *q);
 int file_enqueue(char *n, struct file_queue *q);
 int file_dequeue(char **n, struct file_queue *q);

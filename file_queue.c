@@ -10,11 +10,12 @@ int MAXSIZE = 16;
 // Unbounded_queue for the directory paths
 
 // initializes the queue
-int file_init(struct file_queue *q, int count)
+int file_init(struct file_queue *q)
 {
     q->start = 0;
     q->stop = 0;
     q->isEmpty = 1;
+    q->dir_finished = 0;
     q->names = malloc(sizeof(char *) * MAXSIZE);
     for (int i = 0; i < MAXSIZE; i++)
     {
@@ -85,6 +86,11 @@ int file_dequeue(char **n, struct file_queue *q)
     // Currently queue is empty and must wait
     while (q->isEmpty == 1)
     {
+        if(q->dir_finished == 1 && q->isEmpty){
+            pthread_cond_broadcast(&q->dequeue_ready);
+            printf("DIR FINISHED AND QUEUE IS EMPTY\n");
+            return 0;
+        }
         printf("STUCK WAITING\n");
         pthread_cond_wait(&q->dequeue_ready, &q->lock);
     }
