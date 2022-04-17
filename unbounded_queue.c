@@ -23,6 +23,7 @@ int unbound_init(struct unbounded_queue *q, int count)
         q->names[i] = NULL;
     }
     pthread_mutex_init(&q->lock, NULL);
+    pthread_mutex_init(&q->lock2, NULL);
     pthread_cond_init(&q->dequeue_ready, NULL);
     return 0;
 }
@@ -39,13 +40,14 @@ int unbound_destroy(struct unbounded_queue *q)
     }
     free(q->names);
     pthread_mutex_destroy(&q->lock);
+    pthread_mutex_destroy(&q->lock2);
     pthread_cond_destroy(&q->dequeue_ready);
 }
 
 // Adds name to the queue
 int unbound_enqueue(char *n, struct unbounded_queue *q)
 {
-    pthread_mutex_lock(&q->lock);
+    pthread_mutex_lock(&q->lock2);
     int return_result = 1;
     if (DEBUG)
         printf("Enqueueing \'%s\'...\n", n);
@@ -73,7 +75,7 @@ int unbound_enqueue(char *n, struct unbounded_queue *q)
     q->isEmpty = 0;
     return_result = 0;
     pthread_cond_signal(&q->dequeue_ready);
-    pthread_mutex_unlock(&q->lock);
+    pthread_mutex_unlock(&q->lock2);
     return return_result;
 }
 

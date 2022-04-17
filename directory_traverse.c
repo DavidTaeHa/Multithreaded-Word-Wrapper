@@ -282,6 +282,7 @@ void *directory_worker(void *args)
         if (dir_queue->isEmpty == 1 && dir_queue->total_waiting == thread_count)
         {
             printf("DIRECTORY QUEUE FINISHED!\n");
+            pthread_cond_broadcast(&dir_queue->dequeue_ready);
             break;
         }
         navDir(dir_name, dir_queue, file_queue);
