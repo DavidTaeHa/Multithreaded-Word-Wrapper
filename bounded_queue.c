@@ -48,6 +48,7 @@ int bound_destroy(struct bounded_queue *q)
 // Adds name to the queue
 int bound_enqueue(char *n, struct bounded_queue *q)
 {
+    printf("Enqueuing in file queue \'%s\'\n", n);
     pthread_mutex_lock(&q->lock);
     while (q->full)
     {

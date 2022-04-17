@@ -94,8 +94,8 @@ int unbound_dequeue(char **n, struct unbounded_queue *q)
             printf("Queue is empty...\n");
         q->total_waiting++;
     }
-    printf("Waiting: %d\n", q->total_waiting);
-    printf("Empty status: %d\n", q->isEmpty);
+    //printf("Waiting: %d\n", q->total_waiting);
+    //printf("Empty status: %d\n", q->isEmpty);
 
     // Currently queue is empty and must wait
     while (q->isEmpty)
