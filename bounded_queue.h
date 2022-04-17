@@ -27,3 +27,5 @@ int bound_destroy(struct bounded_queue *q);
 int bound_enqueue(char *n, struct bounded_queue *q);
 int bound_dequeue(char **n, struct bounded_queue *q);
 void bound_print(struct bounded_queue *q);
+
+//NOTES change bounded_queue, work on duplicates in directory worker, test_folder doesn't work

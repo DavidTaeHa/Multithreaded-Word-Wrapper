@@ -50,6 +50,7 @@ int bound_enqueue(char *n, struct bounded_queue *q)
 {
     printf("Enqueuing in file queue \'%s\'\n", n);
     pthread_mutex_lock(&q->lock);
+    bound_print(q);
     while (q->full)
     {
         pthread_cond_wait(&q->enqueue_ready, &q->lock);

@@ -68,13 +68,10 @@ int unbound_enqueue(char *n, struct unbounded_queue *q)
     }
 
     // Adds item to the queue and increments end of queue
-    if (q->total_waiting != q->thread_count)
-    {
-        q->names[q->stop] = n;
-        q->stop++;
-        q->isEmpty = 0;
-        return_result = 0;
-    }
+    q->names[q->stop] = n;
+    q->stop++;
+    q->isEmpty = 0;
+    return_result = 0;
     pthread_cond_signal(&q->dequeue_ready);
     pthread_mutex_unlock(&q->lock);
     return return_result;
@@ -83,7 +80,7 @@ int unbound_enqueue(char *n, struct unbounded_queue *q)
 // Dequeues names from the queue
 int unbound_dequeue(char **n, struct unbounded_queue *q)
 {
-    usleep(10000);
+    //usleep(10000);
     pthread_mutex_lock(&q->lock);
     if (DEBUG)
         printf("Dequeueing \'%s\'...\n", *n);
@@ -94,24 +91,23 @@ int unbound_dequeue(char **n, struct unbounded_queue *q)
             printf("Queue is empty...\n");
         q->total_waiting++;
     }
-    //printf("Waiting: %d\n", q->total_waiting);
-    //printf("Empty status: %d\n", q->isEmpty);
+    printf("Waiting: %d\n", q->total_waiting);
+    printf("Empty status: %d\n", q->isEmpty);
 
     // Currently queue is empty and must wait
-    while (q->isEmpty)
+    while (q->isEmpty == 1)
     {
+        printf("STUCK WAITING\n");
+        
         if (q->total_waiting == q->thread_count)
         {
-            // All threads are waiting
-            printf("ALL THREADS WAITING AND QUEUE IS EMPTY\n");
+            printf("ALL WAITING\n");
             pthread_cond_broadcast(&q->dequeue_ready);
             pthread_mutex_unlock(&q->lock);
             return 0;
         }
-        else
-        {
-            pthread_cond_wait(&q->dequeue_ready, &q->lock);
-        }
+        
+        pthread_cond_wait(&q->dequeue_ready, &q->lock);
     }
 
     if (q->total_waiting > 0)
