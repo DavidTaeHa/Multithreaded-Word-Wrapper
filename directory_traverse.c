@@ -27,6 +27,7 @@ static int exitCode = EXIT_SUCCESS;
 struct unbounded_queue *dir_queue;
 struct bounded_queue *file_queue;
 int thread_count = 5;
+int columns = 15;
 
 void wrap_file(int file_in, int file_out, int columns)
 {
@@ -298,7 +299,7 @@ void *file_worker(void *args)
 int main()
 {
 
-    pthread_t pid, pid2, pid3, pid4, pid5, pid6;
+    pthread_t pid, pid2, pid3, pid4, pid5, pid6, pid7;
     dir_queue = malloc(sizeof(struct unbounded_queue));
     file_queue = malloc(sizeof(struct bounded_queue));
     unbound_init(dir_queue, thread_count);
@@ -321,6 +322,7 @@ int main()
     pthread_create(&pid4, NULL, directory_worker, NULL);
     pthread_create(&pid5, NULL, directory_worker, NULL);
     pthread_create(&pid6, NULL, file_worker, NULL);
+    pthread_create(&pid7, NULL, file_worker, NULL);
 
     pthread_join(pid, NULL);
     pthread_join(pid2, NULL);
@@ -328,6 +330,7 @@ int main()
     pthread_join(pid4, NULL);
     pthread_join(pid5, NULL);
     pthread_join(pid6,NULL);
+    pthread_join(pid7,NULL);
 
     // Might be error here, some iterations do not pass this line
     unbound_print(dir_queue);
