@@ -25,7 +25,7 @@ static int exitCode = EXIT_SUCCESS;
 
 struct unbounded_queue *dir_queue;
 struct unbounded_queue *file_queue;
-int thread_count = 3;
+int thread_count = 5;
 int columns = 15;
 
 void wrap_file(int file_in, int file_out, int columns)
@@ -312,7 +312,7 @@ void *file_worker(void *args)
 
 int main()
 {
-    pthread_t pid, pid2, pid3, pid4, pid5, pid6, pid7;
+    pthread_t pid, pid2, pid3, pid4, pid5, pid6, pid7, pid8, pid9, pid10;
     dir_queue = malloc(sizeof(struct unbounded_queue));
     file_queue = malloc(sizeof(struct unbounded_queue));
     unbound_init(dir_queue, thread_count);
@@ -332,18 +332,24 @@ int main()
     pthread_create(&pid, NULL, directory_worker, NULL);
     pthread_create(&pid2, NULL, directory_worker, NULL);
     pthread_create(&pid3, NULL, directory_worker, NULL);
-    //pthread_create(&pid4, NULL, directory_worker, NULL);
-    //pthread_create(&pid5, NULL, directory_worker, NULL);
-    // pthread_create(&pid6, NULL, file_worker, NULL);
-    // pthread_create(&pid7, NULL, file_worker, NULL);
+    pthread_create(&pid4, NULL, directory_worker, NULL);
+    pthread_create(&pid5, NULL, directory_worker, NULL);
+    //pthread_create(&pid6, NULL, directory_worker, NULL);
+    //pthread_create(&pid7, NULL, directory_worker, NULL);
+    //pthread_create(&pid8, NULL, directory_worker, NULL);
+    //pthread_create(&pid9, NULL, directory_worker, NULL);
+    //pthread_create(&pid10, NULL, directory_worker, NULL);
 
     pthread_join(pid, NULL);
     pthread_join(pid2, NULL);
     pthread_join(pid3, NULL);
-    //pthread_join(pid4, NULL);
-    //pthread_join(pid5, NULL);
-    // pthread_join(pid6,NULL);
-    // pthread_join(pid7,NULL);
+    pthread_join(pid4, NULL);
+    pthread_join(pid5, NULL);
+    //pthread_join(pid6,NULL);
+    //pthread_join(pid7,NULL);
+    //pthread_join(pid8,NULL);
+    //pthread_join(pid9,NULL);
+    //pthread_join(pid10,NULL);
 
     // Might be error here, some iterations do not pass this line
     unbound_print(dir_queue);
@@ -352,6 +358,7 @@ int main()
     unbound_print(file_queue);
     unbound_destroy(file_queue);
     free(file_queue);
+    free(newpath);
     return 0;
 }
 // gcc -fsanitize=address,undefined directory_traverse.c unbounded_queue.c

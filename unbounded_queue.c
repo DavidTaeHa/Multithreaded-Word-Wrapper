@@ -30,7 +30,7 @@ int unbound_init(struct unbounded_queue *q, int count)
 // Frees the queue
 int unbound_destroy(struct unbounded_queue *q)
 {
-    for (int i = 1; i < QUEUESIZE; i++)
+    for (int i = 0; i < QUEUESIZE; i++)
     {
         if (q->names[i] != NULL)
         {
@@ -80,7 +80,7 @@ int unbound_enqueue(char *n, struct unbounded_queue *q)
 // Dequeues names from the queue
 int unbound_dequeue(char **n, struct unbounded_queue *q)
 {
-    //usleep(10000);
+    //usleep(100000);
     pthread_mutex_lock(&q->lock);
     if (DEBUG)
         printf("Dequeueing \'%s\'...\n", *n);
