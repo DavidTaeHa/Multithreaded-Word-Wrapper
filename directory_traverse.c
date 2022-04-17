@@ -322,7 +322,7 @@ int main()
     pthread_create(&pid4, NULL, directory_worker, NULL);
     pthread_create(&pid5, NULL, directory_worker, NULL);
     pthread_create(&pid6, NULL, file_worker, NULL);
-    pthread_create(&pid7, NULL, file_worker, NULL);
+    //pthread_create(&pid7, NULL, file_worker, NULL);
 
     pthread_join(pid, NULL);
     pthread_join(pid2, NULL);
@@ -330,7 +330,7 @@ int main()
     pthread_join(pid4, NULL);
     pthread_join(pid5, NULL);
     pthread_join(pid6,NULL);
-    pthread_join(pid7,NULL);
+    //pthread_join(pid7,NULL);
 
     // Might be error here, some iterations do not pass this line
     unbound_print(dir_queue);
