@@ -86,10 +86,7 @@ int unbound_enqueue(char *n, struct unbounded_queue *q)
 // Dequeues names from the queue
 int unbound_dequeue(char **n, struct unbounded_queue *q)
 {
-    //usleep(100000);
     pthread_mutex_lock(&q->lock);
-    if (DEBUG)
-        printf("Dequeueing \'%s\'...\n", *n);
 
     if (q->isEmpty == 1)
     {
@@ -123,6 +120,8 @@ int unbound_dequeue(char **n, struct unbounded_queue *q)
     }
 
     // Dequeues item and increments start of queue
+    if (DEBUG)
+        printf("Dequeueing \'%s\'...\n", *n);
     *n = q->names[q->start];
     q->start++;
 
