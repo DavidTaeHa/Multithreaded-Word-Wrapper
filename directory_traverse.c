@@ -285,7 +285,7 @@ void *directory_worker(void *args)
     finished++;
     if(finished == thread_count){
         file_queue->dir_finished = 1;
-        pthread_cond_broadcast(&file_queue->dequeue_ready);
+        //pthread_cond_broadcast(&file_queue->dequeue_ready);
         printf("ALL THREADS FINISH!\n");
     }
 }
@@ -297,6 +297,10 @@ void *file_worker(void *args)
     {
         file_dequeue(&file_name, file_queue);
         // int inText = open(file_name, O_RDONLY);
+        if(file_queue->dir_finished == 1 && file_queue->isEmpty == 1){
+            pthread_cond_broadcast(&file_queue->dequeue_ready);
+            break;
+        }
         printf("--------INPUT FILE: %s\n", file_name);
 
         // int outText = open(result_file, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
@@ -304,6 +308,7 @@ void *file_worker(void *args)
         // close(inText);
         // close(outText);
     }
+    pthread_cond_broadcast(&file_queue->dequeue_ready);
     printf("!!!!!!!!!!!!!!!!!!!!!!!!\n");
 }
 
@@ -332,7 +337,7 @@ int main()
     pthread_create(&pid4, NULL, directory_worker, NULL);
     pthread_create(&pid5, NULL, directory_worker, NULL);
     pthread_create(&pid6, NULL, file_worker, NULL);
-    //pthread_create(&pid7, NULL, directory_worker, NULL);
+    pthread_create(&pid7, NULL, file_worker, NULL);
     //pthread_create(&pid8, NULL, directory_worker, NULL);
     //pthread_create(&pid9, NULL, directory_worker, NULL);
     //pthread_create(&pid10, NULL, directory_worker, NULL);
@@ -343,7 +348,7 @@ int main()
     pthread_join(pid4, NULL);
     pthread_join(pid5, NULL);
     pthread_join(pid6,NULL);
-    //pthread_join(pid7,NULL);
+    pthread_join(pid7,NULL);
     //pthread_join(pid8,NULL);
     //pthread_join(pid9,NULL);
     //pthread_join(pid10,NULL);
