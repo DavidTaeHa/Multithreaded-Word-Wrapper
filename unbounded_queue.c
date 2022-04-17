@@ -68,6 +68,12 @@ int unbound_enqueue(char *n, struct unbounded_queue *q)
     }
 
     // Adds item to the queue and increments end of queue
+    if(q->total_waiting == q->thread_count){
+        printf("YES\n");
+        pthread_cond_broadcast(&q->dequeue_ready);
+        pthread_mutex_unlock(&q->lock);
+        return 1;
+    }
     q->names[q->stop] = n;
     q->stop++;
     q->isEmpty = 0;

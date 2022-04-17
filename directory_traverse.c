@@ -285,6 +285,8 @@ void *directory_worker(void *args)
             break;
         }
         navDir(dir_name, dir_queue, file_queue);
+        unbound_print(dir_queue);
+        unbound_print(file_queue);
         // printf("Worker Waiting: %d\n", dir_queue->total_waiting);
         // printf("Worker Empty Status: %d\n", dir_queue->isEmpty);
     }
@@ -293,7 +295,6 @@ void *directory_worker(void *args)
 
 void *file_worker(void *args)
 {
-    /*
     char *file_name;
     while (file_queue->dir_finished == 0 || file_queue->isEmpty == 0)
     {
@@ -307,7 +308,6 @@ void *file_worker(void *args)
         // close(outText);
     }
     printf("!!!!!!!!!!!!!!!!!!!!!!!!\n");
-    */
 }
 
 int main()
