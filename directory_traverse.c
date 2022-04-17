@@ -270,8 +270,6 @@ void *directory_worker(void *args)
     {
         unbound_dequeue(&dir_name, dir_queue);
         navDir(dir_name, dir_queue, file_queue);
-        // printf("OUTSIDEWaiting: %d\n", dir_queue->total_waiting);
-        // printf("OUTSIDEEmpty status: %d\n", dir_queue->isEmpty);
     }
     printf("FINISH!\n");
     if (dir_queue->isEmpty == 1 && dir_queue->total_waiting == thread_count)
@@ -296,7 +294,6 @@ void *file_worker(void *args)
     }
     printf("!!!!!!!!!!!!!!!!!!!!!!!!\n");
 }
-// && dir_queue->total_waiting < 1
 
 int main()
 {
@@ -315,10 +312,8 @@ int main()
     memcpy(newpath, path, plen);
     newpath[plen] = '/';
     memcpy(newpath + plen + 1, file, flen + 1);
-    
 
     unbound_enqueue(newpath, dir_queue);
-    // navDir(dir, dir_queue);
 
     pthread_create(&pid, NULL, directory_worker, NULL);
     pthread_create(&pid2, NULL, directory_worker, NULL);

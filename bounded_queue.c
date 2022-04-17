@@ -17,6 +17,7 @@ int bound_init(struct bounded_queue *q)
     q->stop = 0;
     q->full = 0;
     q->isEmpty = 1;
+    q->dir_finished = 0;
     q->names = malloc(sizeof(char *) * MAXSIZE);
     for (int i = 0; i < MAXSIZE; i++)
     {
@@ -69,6 +70,7 @@ int bound_dequeue(char **n, struct bounded_queue *q)
 {
     pthread_mutex_lock(&q->lock);
 
+    //bounded queue is empty
     while (!q->full && q->start == q->stop)
     {
         //Directory traversal is finished and bounded queue is empty
