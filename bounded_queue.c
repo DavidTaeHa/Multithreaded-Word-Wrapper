@@ -3,10 +3,10 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <limits.h>
+#include <string.h>
 #include "bounded_queue.h"
 
 // int QUEUESIZE = 16;
-int total_waiting = 0;
 
 // Bounded_queue for the filepaths
 
@@ -16,12 +16,9 @@ int bound_init(struct bounded_queue *q)
     q->start = 0;
     q->stop = 0;
     q->full = 0;
-    q->wait_status = 0;
-    q->capacity = 0;
-    q->names = malloc(sizeof(char *) * QUEUESIZE);
-    for (int i = 0; i < QUEUESIZE; i++)
+    q->names = malloc(sizeof(char *) * MAXSIZE);
+    for (int i = 0; i < MAXSIZE; i++)
     {
-        q->names[i] = malloc(sizeof(char) * FILEPATH);
         q->names[i] = NULL;
     }
     pthread_mutex_init(&q->lock, NULL);
@@ -30,14 +27,20 @@ int bound_init(struct bounded_queue *q)
     return 0;
 }
 
-//Frees the queue
+// Frees the queue
 int bound_destroy(struct bounded_queue *q)
 {
-    for (int i = 0; i < QUEUESIZE; i++)
+    for (int i = 0; i < MAXSIZE; i++)
     {
-        free(q->names[i]);
+        if (q->names[i] != NULL)
+        {
+            free(q->names[i]);
+        }
     }
     free(q->names);
+    pthread_mutex_destroy(&q->lock);
+    pthread_cond_destroy(&q->enqueue_ready);
+    pthread_cond_destroy(&q->dequeue_ready);
 }
 
 // Adds name to the queue
@@ -50,8 +53,7 @@ int bound_enqueue(char *n, struct bounded_queue *q)
     }
     q->names[q->stop] = n;
     q->stop++;
-    q->capacity++;
-    if (q->stop == QUEUESIZE)
+    if (q->stop == MAXSIZE)
         q->stop = 0;
     if (q->start == q->stop)
         q->full = 1;
@@ -66,24 +68,11 @@ int bound_dequeue(char **n, struct bounded_queue *q)
     pthread_mutex_lock(&q->lock);
     while (!q->full && q->start == q->stop)
     {
-        if (q->wait_status == 0)
-        {
-            q->wait_status = 1;
-            total_waiting++;
-        }
         pthread_cond_wait(&q->dequeue_ready, &q->lock);
-    }
-    if (q->wait_status == 1)
-    {
-        q->wait_status = 0;
-        total_waiting--;
     }
     *n = q->names[q->start];
     q->start++;
-    q->capacity--;
-    if (q->start == QUEUESIZE)
-        q->start == 0;
-    q->full = 0;
+
     pthread_cond_signal(&q->enqueue_ready);
     pthread_mutex_unlock(&q->lock);
     return 0;
@@ -92,7 +81,7 @@ int bound_dequeue(char **n, struct bounded_queue *q)
 // Prints out all elements within the queue for testing
 void bound_print(struct bounded_queue *q)
 {
-    for (int i = 0; i < QUEUESIZE; i++)
+    for (int i = 0; i < MAXSIZE; i++)
     {
         if (q->names[i] == NULL)
         {
@@ -103,4 +92,24 @@ void bound_print(struct bounded_queue *q)
             printf("%s\n", q->names[i]);
         }
     }
+}
+
+int main()
+{
+    struct bounded_queue *temp = malloc(sizeof(struct bounded_queue));
+    bound_init(temp);
+
+    char *path = "boom";
+    char *file = "shaka";
+    int plen = strlen(path);
+    int flen = strlen(file);
+    char *newpath = malloc(plen + flen + 2);
+    memcpy(newpath, path, plen);
+    newpath[plen] = '/';
+    memcpy(newpath + plen + 1, file, flen + 1);
+    bound_enqueue(newpath, temp);
+
+    bound_print(temp);
+    bound_destroy(temp);
+    free(temp);
 }
