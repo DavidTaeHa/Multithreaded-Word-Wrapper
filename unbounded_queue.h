@@ -17,6 +17,7 @@ struct unbounded_queue
     char **names;
     int start, stop;
     int isEmpty;
+    int dir_finished;
     int total_waiting;
     int thread_count;
     pthread_mutex_t lock;
