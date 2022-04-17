@@ -27,6 +27,7 @@ struct unbounded_queue *dir_queue;
 struct unbounded_queue *file_queue;
 int thread_count = 5;
 int columns = 15;
+int finished = 0;
 
 void wrap_file(int file_in, int file_out, int columns)
 {
@@ -277,7 +278,7 @@ void *directory_worker(void *args)
         }
         navDir(dir_name, dir_queue, file_queue);
         //unbound_print(dir_queue);
-        unbound_print(file_queue);
+        //unbound_print(file_queue);
         // printf("Worker Waiting: %d\n", dir_queue->total_waiting);
         // printf("Worker Empty Status: %d\n", dir_queue->isEmpty);
     }
@@ -287,7 +288,7 @@ void *directory_worker(void *args)
 void *file_worker(void *args)
 {
     char *file_name;
-    while (file_queue->dir_finished == 0 || file_queue->isEmpty == 0)
+    while (finished == 0 || file_queue->isEmpty == 0)
     {
         unbound_dequeue(&file_name, file_queue);
         // int inText = open(file_name, O_RDONLY);
@@ -325,7 +326,7 @@ int main()
     pthread_create(&pid3, NULL, directory_worker, NULL);
     pthread_create(&pid4, NULL, directory_worker, NULL);
     pthread_create(&pid5, NULL, directory_worker, NULL);
-    //pthread_create(&pid6, NULL, directory_worker, NULL);
+    pthread_create(&pid6, NULL, file_worker, NULL);
     //pthread_create(&pid7, NULL, directory_worker, NULL);
     //pthread_create(&pid8, NULL, directory_worker, NULL);
     //pthread_create(&pid9, NULL, directory_worker, NULL);
@@ -336,7 +337,7 @@ int main()
     pthread_join(pid3, NULL);
     pthread_join(pid4, NULL);
     pthread_join(pid5, NULL);
-    //pthread_join(pid6,NULL);
+    pthread_join(pid6,NULL);
     //pthread_join(pid7,NULL);
     //pthread_join(pid8,NULL);
     //pthread_join(pid9,NULL);
