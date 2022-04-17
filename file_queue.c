@@ -87,8 +87,9 @@ int file_dequeue(char **n, struct file_queue *q)
     while (q->isEmpty == 1)
     {
         if(q->dir_finished == 1 && q->isEmpty){
-            pthread_cond_broadcast(&q->dequeue_ready);
             printf("DIR FINISHED AND QUEUE IS EMPTY\n");
+            pthread_cond_broadcast(&q->dequeue_ready);
+            pthread_mutex_unlock(&q->lock);
             return 0;
         }
         printf("STUCK WAITING\n");

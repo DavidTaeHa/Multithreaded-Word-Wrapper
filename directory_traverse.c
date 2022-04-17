@@ -285,7 +285,7 @@ void *directory_worker(void *args)
     finished++;
     if(finished == thread_count){
         file_queue->dir_finished = 1;
-        //pthread_cond_broadcast(&file_queue->dequeue_ready);
+        pthread_cond_broadcast(&file_queue->dequeue_ready);
         printf("ALL THREADS FINISH!\n");
     }
 }
@@ -308,7 +308,6 @@ void *file_worker(void *args)
         // close(inText);
         // close(outText);
     }
-    pthread_cond_broadcast(&file_queue->dequeue_ready);
     printf("!!!!!!!!!!!!!!!!!!!!!!!!\n");
 }
 
