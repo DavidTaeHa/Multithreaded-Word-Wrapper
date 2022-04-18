@@ -1,7 +1,41 @@
-The main thread will start one or more work threads that will perform the actual
-word-wrapping tasks. Again, we will use a work queue to distribute the load.
-Each time the directory traversal system encounters a regular file, it adds that
-file’s path to the file work queue. Each wrapping thread will repeatedly
-obtain a file path from the file work queue and wrap that file’s output to the
-corresponding output file. If the work file queue is empty, and the directory
-traversal is complete, the file thread should terminate.
+The main thread
+will start one
+or more work
+threads that
+will perform
+the actual
+word-wrapping
+tasks. Again,
+we will use a
+work queue to
+distribute the
+load. Each time
+the directory
+traversal
+system
+encounters a
+regular file,
+it adds that
+file’s path
+to the file
+work queue.
+Each wrapping
+thread will
+repeatedly
+obtain a file
+path from the
+file work queue
+and wrap that
+file’s output
+to the
+corresponding
+output file. If
+the work file
+queue is empty,
+and the
+directory
+traversal is
+complete, the
+file thread
+should
+terminate.

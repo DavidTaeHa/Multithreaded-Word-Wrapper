@@ -25,12 +25,11 @@ static int exitCode = EXIT_SUCCESS;
 
 struct unbounded_queue *dir_queue;
 struct file_queue *file_queue;
-int dir_thread = 0;
-int file_thread = 0;
+int thread_count = 5;
 int columns = 15;
 int finished = 0;
 
-void wrap_file(int file_in, int file_out)
+void wrap_file(int file_in, int file_out, int columns)
 {
     int length = BUFFSIZE, bytes = 0, brite = 0, last = 0, nLin = 0, nPar = 0, n = 0, fLen;
     char *buf = malloc(sizeof(char) * BUFFSIZE);
@@ -163,6 +162,45 @@ void wrap_file(int file_in, int file_out)
     free(buf);
 }
 
+void procDir(char *a, int columns, struct unbounded_queue *qDir, struct unbounded_queue *qFile)
+{
+    struct dirent *de;
+    DIR *dr = opendir(".");
+    if (dr == NULL)
+    {
+        closedir(dr);
+        return;
+    }
+    while ((de = readdir(dr)) != NULL)
+    {
+        struct stat temp;
+        if (stat(de->d_name, &temp) != -1 && de->d_name[0] != '.')
+        {
+            if (S_ISREG(temp.st_mode))
+            {
+                if (de->d_name[0] == '.')
+                {
+                    return;
+                }
+                else if (strstr(de->d_name, "wrap.") == de->d_name)
+                {
+                    return;
+                }
+                else if (strstr(de->d_name, ".txt"))
+                {
+                    // Here it will make the call to FileProcessing Worker qFile, queuing de->d_name
+                    printf("File to wrap: %s\n", de->d_name);
+                    // unbound_enqueue(de->d_name, file_queue);
+                    return;
+                }
+            }
+        }
+    }
+    closedir(dr);
+    return;
+}
+// just print for now
+
 // This version only traverses through current given directory
 void navDir(char *a, struct unbounded_queue *q, struct file_queue *r)
 { // example input: ./foldera
@@ -230,18 +268,22 @@ void *directory_worker(void *args)
 {
     char *dir_name;
     // Work on the directory queue while it is not empty or the number of waiting threads is less than total threads
-    while (dir_queue->isEmpty == 0 || dir_queue->total_waiting < dir_thread)
+    while (dir_queue->isEmpty == 0 || dir_queue->total_waiting < thread_count)
     {
         unbound_dequeue(&dir_name, dir_queue);
-        if (dir_queue->isEmpty == 1 && dir_queue->total_waiting == dir_thread)
+        if (dir_queue->isEmpty == 1 && dir_queue->total_waiting == thread_count)
         {
             printf("DIRECTORY QUEUE FINISHED!\n");
             break;
         }
         navDir(dir_name, dir_queue, file_queue);
+        // unbound_print(dir_queue);
+        // unbound_print(file_queue);
+        //  printf("Worker Waiting: %d\n", dir_queue->total_waiting);
+        //  printf("Worker Empty Status: %d\n", dir_queue->isEmpty);
     }
     finished++;
-    if (finished == dir_thread)
+    if (finished == thread_count)
     {
         file_queue->dir_finished = 1;
         pthread_cond_broadcast(&file_queue->dequeue_ready);
@@ -317,7 +359,7 @@ void *file_worker(void *args)
         printf("--------OUTPUT: %s\n", temp4);
 
         int outText = open(temp4, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
-        wrap_file(inText, outText);
+        wrap_file(inText, outText, columns);
         close(inText);
         close(outText);
     }
@@ -326,17 +368,10 @@ void *file_worker(void *args)
 
 int main()
 {
-    int M = 50;
-    int N = 50;
-    dir_thread = M;
-    file_thread = N;
-    columns = 80;
-
-    pthread_t tidsM[dir_thread];
-    pthread_t tidsN[file_thread];
+    pthread_t pid, pid2, pid3, pid4, pid5, pid6, pid7, pid8, pid9, pid10;
     dir_queue = malloc(sizeof(struct unbounded_queue));
     file_queue = malloc(sizeof(struct file_queue));
-    unbound_init(dir_queue, dir_thread);
+    unbound_init(dir_queue, thread_count);
     file_init(file_queue);
 
     char *path = ".";
@@ -350,18 +385,27 @@ int main()
 
     unbound_enqueue(newpath, dir_queue);
 
-    for(int i = 0; i < dir_thread; i++){
-        pthread_create(&tidsM[i], NULL, directory_worker, dir_queue);
-    }
-    for(int i = 0; i < file_thread; i++){
-        pthread_create(&tidsN[i], NULL, file_worker, file_queue);
-    }
-    for(int i = 0; i < dir_thread; i++){
-        pthread_join(tidsM[i], NULL);
-    }
-    for(int i = 0; i < file_thread; i++){
-        pthread_join(tidsN[i], NULL);
-    }
+    pthread_create(&pid, NULL, directory_worker, NULL);
+    pthread_create(&pid2, NULL, directory_worker, NULL);
+    pthread_create(&pid3, NULL, directory_worker, NULL);
+    pthread_create(&pid4, NULL, directory_worker, NULL);
+    pthread_create(&pid5, NULL, directory_worker, NULL);
+    pthread_create(&pid6, NULL, file_worker, NULL);
+    pthread_create(&pid7, NULL, file_worker, NULL);
+    pthread_create(&pid8, NULL, file_worker, NULL);
+    pthread_create(&pid9, NULL, file_worker, NULL);
+    pthread_create(&pid10, NULL, file_worker, NULL);
+
+    pthread_join(pid, NULL);
+    pthread_join(pid2, NULL);
+    pthread_join(pid3, NULL);
+    pthread_join(pid4, NULL);
+    pthread_join(pid5, NULL);
+    pthread_join(pid6, NULL);
+    pthread_join(pid7, NULL);
+    pthread_join(pid8, NULL);
+    pthread_join(pid9, NULL);
+    pthread_join(pid10, NULL);
 
     // Might be error here, some iterations do not pass this line
     unbound_print(dir_queue);

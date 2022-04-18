@@ -1,12 +1,68 @@
-Using opendir() and readdir(), we can easily obtain a list of all files in a
-particular directory. One could imagine making this recursive by making your
-code recursive: when reading some directory A, you encounter a subdirectory B,
-handle it and its descendents in a recursive call, and then continue reading
-directory A. Unfortunately, there is a limit to how many files and directories a
-processes can have open at once, which would limit the depth of the directory
-subtree our program could handle. Instead, ww will use a work queue. Each time a
-subdirectory is found, its path will be added to the directory work queue. Once
-the directory is finished (and closed), the directory traversal function will
-obtain the next path from the work queue, and begin reading its entries. Thus,
-the number of directories open at a time is fixed, regardless of the depth of
-the directory tree.
+Using opendir()
+and readdir(),
+we can easily
+obtain a list
+of all files in
+a particular
+directory. One
+could imagine
+making this
+recursive by
+making your
+code recursive:
+when reading
+some directory
+A, you
+encounter a
+subdirectory B,
+handle it and
+its descendents
+in a recursive
+call, and then
+continue
+reading
+directory A.
+Unfortunately,
+there is a
+limit to how
+many files and
+directories a
+processes can
+have open at
+once, which
+would limit the
+depth of the
+directory
+subtree our
+program could
+handle.
+Instead, ww
+will use a work
+queue. Each
+time a
+subdirectory is
+found, its path
+will be added
+to the
+directory work
+queue. Once the
+directory is
+finished (and
+closed), the
+directory
+traversal
+function will
+obtain the next
+path from the
+work queue, and
+begin reading
+its entries.
+Thus, the
+number of
+directories
+open at a time
+is fixed,
+regardless of
+the depth of
+the directory
+tree.
