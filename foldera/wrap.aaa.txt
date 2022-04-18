@@ -1,25 +1,6 @@
-We will extend the
-ww program from
-Project II to
-support recursive
-directory traversal
-and multi-
-threading. You are
-encouraged to re-use
-or improve your
-word-wrapping code
-from Project II. (If
-you are working with
-a different partner,
-you may combine
-ideas from both
-partner’s
-implementations.)
-The word-wrapping
-requirements for
-this project are
-unchanged from
-Project II. The new
-features, to be
-added in this
-project, are:
+We will extend the ww program from Project II to support recursive directory
+traversal and multi- threading. You are encouraged to re-use or improve your
+word-wrapping code from Project II. (If you are working with a different
+partner, you may combine ideas from both partner’s implementations.) The
+word-wrapping requirements for this project are unchanged from Project II. The
+new features, to be added in this project, are:

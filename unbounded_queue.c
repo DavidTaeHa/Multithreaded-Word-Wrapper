@@ -82,9 +82,10 @@ int unbound_enqueue(char *n, struct unbounded_queue *q)
 // Dequeues names from the queue
 int unbound_dequeue(char **n, struct unbounded_queue *q)
 {
-    usleep(2000*q->thread_count);
-    //usleep(100000);
+    // usleep(2000*q->thread_count);
+    // usleep(100000);
     pthread_mutex_lock(&q->lock);
+    // usleep(2000*q->thread_count);
     if (q->isEmpty == 1)
     {
         if (DEBUG)
@@ -97,20 +98,24 @@ int unbound_dequeue(char **n, struct unbounded_queue *q)
     // Currently queue is empty and must wait
     while (q->isEmpty == 1)
     {
-        
+
         if (q->total_waiting == q->thread_count)
         {
             pthread_cond_broadcast(&q->dequeue_ready);
             pthread_mutex_unlock(&q->lock);
             return 0;
         }
-        
-        pthread_cond_wait(&q->dequeue_ready, &q->lock);
-    }
 
-    if (q->total_waiting > 0)
-    {
-        q->total_waiting--;
+        pthread_cond_wait(&q->dequeue_ready, &q->lock);
+
+        if (q->total_waiting > 0)
+        {
+            q->total_waiting--;
+        }
+        if (q->isEmpty == 1)
+        {
+            q->total_waiting++;
+        }
     }
 
     // Dequeues item and increments start of queue

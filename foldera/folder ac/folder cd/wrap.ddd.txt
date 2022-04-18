@@ -1,18 +1,5 @@
-Note Each file
-thread is a loop
-that will handle
-multiple files. We
-do not start a new
-thread for each
-file. The use of a
-single work queue
-tends to balance the
-amount of work done
-by each thread. If a
-thread is working on
-a particularly long
-file, other threads
-will automatically
-obtain new files and
-redistribute the
-work load.
+Note Each file thread is a loop that will handle multiple files. We do not start
+a new thread for each file. The use of a single work queue tends to balance the
+amount of work done by each thread. If a thread is working on a particularly
+long file, other threads will automatically obtain new files and redistribute
+the work load.

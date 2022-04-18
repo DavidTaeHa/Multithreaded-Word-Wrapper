@@ -29,6 +29,7 @@ int dir_thread = 0;
 int file_thread = 0;
 int columns = 15;
 int finished = 0;
+int active_threads = 0;
 
 void wrap_file(int file_in, int file_out)
 {
@@ -322,7 +323,7 @@ void *file_worker(void *args)
 
 int main()
 {
-    int M = 1;
+    int M = 10;
     int N = 1;
     dir_thread = M;
     file_thread = N;
