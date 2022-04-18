@@ -82,26 +82,24 @@ int unbound_enqueue(char *n, struct unbounded_queue *q)
 // Dequeues names from the queue
 int unbound_dequeue(char **n, struct unbounded_queue *q)
 {
-    usleep(100000);
+    usleep(2000*q->thread_count);
+    //usleep(100000);
     pthread_mutex_lock(&q->lock);
-
     if (q->isEmpty == 1)
     {
         if (DEBUG)
             printf("Queue is empty...\n");
         q->total_waiting++;
     }
-    printf("Waiting: %d\n", q->total_waiting);
+    printf("Waiting Directory Threads: %d\n", q->total_waiting);
     printf("Empty status: %d\n", q->isEmpty);
 
     // Currently queue is empty and must wait
     while (q->isEmpty == 1)
     {
-        printf("STUCK WAITING\n");
         
         if (q->total_waiting == q->thread_count)
         {
-            printf("ALL WAITING\n");
             pthread_cond_broadcast(&q->dequeue_ready);
             pthread_mutex_unlock(&q->lock);
             return 0;
@@ -112,7 +110,6 @@ int unbound_dequeue(char **n, struct unbounded_queue *q)
 
     if (q->total_waiting > 0)
     {
-        printf("Decreasing waiting: %d\n", q->total_waiting);
         q->total_waiting--;
     }
 

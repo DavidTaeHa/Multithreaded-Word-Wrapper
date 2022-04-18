@@ -235,17 +235,18 @@ void *directory_worker(void *args)
         unbound_dequeue(&dir_name, dir_queue);
         if (dir_queue->isEmpty == 1 && dir_queue->total_waiting == dir_thread)
         {
-            printf("DIRECTORY QUEUE FINISHED!\n");
+            printf("One Directory Thread Finished...\n");
             break;
         }
         navDir(dir_name, dir_queue, file_queue);
+        //file_print(file_queue);
     }
     finished++;
     if (finished == dir_thread)
     {
         file_queue->dir_finished = 1;
         pthread_cond_broadcast(&file_queue->dequeue_ready);
-        printf("ALL DIRECTORY THREADS FINISH!\n");
+        printf("All Directory Threads Finished!\n");
     }
 }
 
@@ -260,7 +261,7 @@ void *file_worker(void *args)
             pthread_cond_broadcast(&file_queue->dequeue_ready);
             break;
         }
-        printf("--------INPUT FILE: %s\n", file_name);
+        printf("Wrapping %s...\n", file_name);
         int inText = open(file_name, O_RDONLY);
 
         char *token;
@@ -273,7 +274,6 @@ void *file_worker(void *args)
         memset(filename_cpy,0,sizeof(filename_cpy));
 
         strcpy(filename_cpy, file_name);
-        printf("FILE LENGTH: %d\n", strlen(file_name));
         token = strtok(filename_cpy, "/");
 
         strcat(temp, token);
@@ -313,21 +313,17 @@ void *file_worker(void *args)
         strcat(temp4, temp2);
         strcat(temp4, temp3);
 
-        printf("%s\n", last);
-        printf("--------OUTPUT: %s\n", temp4);
-
         int outText = open(temp4, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
         wrap_file(inText, outText);
         close(inText);
         close(outText);
     }
-    printf("!!!!!!!!!!!!!!!!!!!!!!!!\n");
 }
 
 int main()
 {
-    int M = 50;
-    int N = 50;
+    int M = 1;
+    int N = 1;
     dir_thread = M;
     file_thread = N;
     columns = 80;
@@ -370,6 +366,7 @@ int main()
     file_print(file_queue);
     file_destroy(file_queue);
     free(file_queue);
+    printf("Finished Wrapping...\n");
     return 0;
 }
 // gcc -fsanitize=address,undefined directory_traverse.c unbounded_queue.c file_queue.c
