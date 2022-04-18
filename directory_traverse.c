@@ -277,16 +277,17 @@ void *directory_worker(void *args)
             break;
         }
         navDir(dir_name, dir_queue, file_queue);
-        //unbound_print(dir_queue);
-        //unbound_print(file_queue);
-        // printf("Worker Waiting: %d\n", dir_queue->total_waiting);
-        // printf("Worker Empty Status: %d\n", dir_queue->isEmpty);
+        // unbound_print(dir_queue);
+        // unbound_print(file_queue);
+        //  printf("Worker Waiting: %d\n", dir_queue->total_waiting);
+        //  printf("Worker Empty Status: %d\n", dir_queue->isEmpty);
     }
     finished++;
-    if(finished == thread_count){
+    if (finished == thread_count)
+    {
         file_queue->dir_finished = 1;
         pthread_cond_broadcast(&file_queue->dequeue_ready);
-        printf("ALL THREADS FINISH!\n");
+        printf("ALL DIRECTORY THREADS FINISH!\n");
     }
 }
 
@@ -296,17 +297,71 @@ void *file_worker(void *args)
     while (file_queue->dir_finished == 0 || file_queue->isEmpty == 0)
     {
         file_dequeue(&file_name, file_queue);
-        // int inText = open(file_name, O_RDONLY);
-        if(file_queue->dir_finished == 1 && file_queue->isEmpty == 1){
+        if (file_queue->dir_finished == 1 && file_queue->isEmpty == 1)
+        {
             pthread_cond_broadcast(&file_queue->dequeue_ready);
             break;
         }
         printf("--------INPUT FILE: %s\n", file_name);
+        int inText = open(file_name, O_RDONLY);
 
-        // int outText = open(result_file, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
-        // wrap_file(inText, outText, 15);
-        // close(inText);
-        // close(outText);
+        char *token;
+        char *last;
+        char temp[4096];
+        char temp2[4096];
+        char filename_cpy[4096];
+        memset(temp,0,sizeof(temp));
+        memset(temp2,0,sizeof(temp2));
+        memset(filename_cpy,0,sizeof(filename_cpy));
+
+        strcpy(filename_cpy, file_name);
+        printf("FILE LENGTH: %d\n", strlen(file_name));
+        token = strtok(filename_cpy, "/");
+
+        strcat(temp, token);
+        while (token != NULL)
+        {
+            strcat(temp, "/");
+            token = strtok(NULL, "/");
+            if (token != NULL)
+            {
+                strcat(temp, token);
+                last = token;
+            }
+        }
+
+        token = strtok(temp, "/");
+        strcat(temp2, token);
+        while (token != NULL)
+        {
+            token = strtok(NULL, "/");
+            if (token != NULL)
+            {
+                strcat(temp2, "/");
+                if (strcmp(last, token) != 0)
+                {
+                    strcat(temp2, token);
+                }
+            }
+        }
+
+        char temp3[4096];
+        char temp4[4096];
+        memset(temp3,0,sizeof(temp3));
+        memset(temp4,0,sizeof(temp4));
+
+        strcat(temp3, "wrap.");
+        strcat(temp3, last);
+        strcat(temp4, temp2);
+        strcat(temp4, temp3);
+
+        printf("%s\n", last);
+        printf("--------OUTPUT: %s\n", temp4);
+
+        int outText = open(temp4, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
+        wrap_file(inText, outText, 80);
+        close(inText);
+        close(outText);
     }
     printf("!!!!!!!!!!!!!!!!!!!!!!!!\n");
 }
@@ -315,7 +370,7 @@ int main()
 {
     pthread_t pid, pid2, pid3, pid4, pid5, pid6, pid7, pid8, pid9, pid10;
     dir_queue = malloc(sizeof(struct unbounded_queue));
-    file_queue = malloc(sizeof(struct unbounded_queue));
+    file_queue = malloc(sizeof(struct file_queue));
     unbound_init(dir_queue, thread_count);
     file_init(file_queue);
 
@@ -337,20 +392,20 @@ int main()
     pthread_create(&pid5, NULL, directory_worker, NULL);
     pthread_create(&pid6, NULL, file_worker, NULL);
     pthread_create(&pid7, NULL, file_worker, NULL);
-    //pthread_create(&pid8, NULL, directory_worker, NULL);
-    //pthread_create(&pid9, NULL, directory_worker, NULL);
-    //pthread_create(&pid10, NULL, directory_worker, NULL);
+    pthread_create(&pid8, NULL, file_worker, NULL);
+    pthread_create(&pid9, NULL, file_worker, NULL);
+    pthread_create(&pid10, NULL, file_worker, NULL);
 
     pthread_join(pid, NULL);
     pthread_join(pid2, NULL);
     pthread_join(pid3, NULL);
     pthread_join(pid4, NULL);
     pthread_join(pid5, NULL);
-    pthread_join(pid6,NULL);
-    pthread_join(pid7,NULL);
-    //pthread_join(pid8,NULL);
-    //pthread_join(pid9,NULL);
-    //pthread_join(pid10,NULL);
+    pthread_join(pid6, NULL);
+    pthread_join(pid7, NULL);
+    pthread_join(pid8, NULL);
+    pthread_join(pid9, NULL);
+    pthread_join(pid10, NULL);
 
     // Might be error here, some iterations do not pass this line
     unbound_print(dir_queue);
@@ -359,8 +414,7 @@ int main()
     file_print(file_queue);
     file_destroy(file_queue);
     free(file_queue);
-    free(newpath);
     return 0;
 }
-// gcc -fsanitize=address,undefined directory_traverse.c unbounded_queue.c
+// gcc -fsanitize=address,undefined directory_traverse.c unbounded_queue.c file_queue.c
 //  gcc directory_traverse.c unbounded_queue.c file_queue.c

@@ -1,16 +1,4 @@
-Part I (40
-points)
-Recursive
-directory
-traversal.
+Part I (40 points) Recursive directory traversal.
 
-When the first
-argument to ww
-is -r, ww will
-wrap all files
-in the
-specified
-directory and
-its descendent
-directories,
-recursively.
+When the first argument to ww is -r, ww will wrap all files in the specified
+directory and its descendent directories, recursively.

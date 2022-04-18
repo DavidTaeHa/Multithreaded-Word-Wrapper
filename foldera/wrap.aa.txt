@@ -1,26 +1,5 @@
-This is a group
-project. You
-may work alone,
-or with a
-partner. Your
-partner may be
-in a different
-section. To
-submit your
-assignment to
-Canvas, you
-must join a
-group in the
-Project III
-group set.
-These groups
-will be named
-Project III
-Group X, where
-Xis some
-number. You
-must join a
-group, even if
-you are the
-only person in
-the group.
+This is a group project. You may work alone, or with a partner. Your partner may
+be in a different section. To submit your assignment to Canvas, you must join a
+group in the Project III group set. These groups will be named Project III Group
+X, where Xis some number. You must join a group, even if you are the only person
+in the group.

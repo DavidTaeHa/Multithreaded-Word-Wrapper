@@ -1,38 +1,7 @@
-Part III (25
-points)
-Concurrent
-wrapping with
-concurrent
-directory
-traversal. When
-the first
-argument to ww
-is -rM,N, where
-M and N are
-positive
-integers, ww
-will wrap all
-files in the
-specified
-directory and
-its descendent
-directories
-using M threads
-to read
-directory files
-and N threads
-to wrap regular
-files. While it
-is not
-required, it
-would be
-reasonable to
-use a common
-implementation
-for all three
-parts, such
-that -r is
-treated as
--r1,1 and -rN
-is treated as
+Part III (25 points) Concurrent wrapping with concurrent directory traversal.
+When the first argument to ww is -rM,N, where M and N are positive integers, ww
+will wrap all files in the specified directory and its descendent directories
+using M threads to read directory files and N threads to wrap regular files.
+While it is not required, it would be reasonable to use a common implementation
+for all three parts, such that -r is treated as -r1,1 and -rN is treated as
 -r1,N.

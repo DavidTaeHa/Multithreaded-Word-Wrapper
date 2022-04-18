@@ -86,22 +86,20 @@ int file_dequeue(char **n, struct file_queue *q)
     // Currently queue is empty and must wait
     while (q->isEmpty == 1)
     {
-        if(q->dir_finished == 1 && q->isEmpty){
+        if (q->dir_finished == 1 && q->isEmpty)
+        {
             printf("DIR FINISHED AND QUEUE IS EMPTY\n");
             pthread_cond_broadcast(&q->dequeue_ready);
             pthread_mutex_unlock(&q->lock);
             return 0;
         }
-        printf("STUCK WAITING\n");
+        printf("STUCK WAITINGs\n");
         pthread_cond_wait(&q->dequeue_ready, &q->lock);
     }
 
     // Dequeues item and increments start of queue
-    if (DEBUG)
-        printf("Dequeueing \'%s\'...\n", *n);
     *n = q->names[q->start];
     q->start++;
-
     // Checks if queue is empty
     if (q->stop == q->start)
     {
