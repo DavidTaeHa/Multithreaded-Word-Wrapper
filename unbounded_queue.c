@@ -15,6 +15,7 @@ int unbound_init(struct unbounded_queue *q, int count)
     q->start = 0;
     q->stop = 0;
     q->isEmpty = 1;
+    q->closed = 0;
     q->total_waiting = 0;
     q->thread_count = count;
     q->names = malloc(sizeof(char *) * QUEUESIZE);
@@ -48,6 +49,13 @@ int unbound_destroy(struct unbounded_queue *q)
 int unbound_enqueue(char *n, struct unbounded_queue *q)
 {
     pthread_mutex_lock(&q->lock);
+    if (q->closed == 1)
+    {
+        q->isEmpty = 1;
+        pthread_cond_broadcast(&q->dequeue_ready);
+        pthread_mutex_unlock(&q->lock);
+        return 1;
+    }
     int return_result = 1;
     if (DEBUG)
         printf("Enqueueing \'%s\'...\n", n);
@@ -82,43 +90,43 @@ int unbound_enqueue(char *n, struct unbounded_queue *q)
 // Dequeues names from the queue
 int unbound_dequeue(char **n, struct unbounded_queue *q)
 {
-    // usleep(2000*q->thread_count);
-    // usleep(100000);
     pthread_mutex_lock(&q->lock);
-    // usleep(2000*q->thread_count);
+
+    // Add close operation: NOTE dequeue fails if queue is empty and closed
+    /*
     if (q->isEmpty == 1)
     {
         if (DEBUG)
             printf("Queue is empty...\n");
-        q->total_waiting++;
     }
-    printf("Waiting Directory Threads: %d\n", q->total_waiting);
-    printf("Empty status: %d\n", q->isEmpty);
+    */
+    // printf("Waiting Directory Threads: %d\n", q->total_waiting);
+    // printf("Empty status: %d\n", q->isEmpty);
 
     // Currently queue is empty and must wait
     while (q->isEmpty == 1)
     {
-
-        if (q->total_waiting == q->thread_count)
+        q->total_waiting++;
+        if (q->closed == 1)
         {
             pthread_cond_broadcast(&q->dequeue_ready);
             pthread_mutex_unlock(&q->lock);
             return 0;
         }
-
+        if (q->total_waiting == q->thread_count)
+        {
+            printf("WAITING EQUALS THREAD COUNT\n");
+            q->closed = 1;
+            pthread_cond_broadcast(&q->dequeue_ready);
+            pthread_mutex_unlock(&q->lock);
+            return 0;
+        }
         pthread_cond_wait(&q->dequeue_ready, &q->lock);
-
-        if (q->total_waiting > 0)
-        {
-            q->total_waiting--;
-        }
-        if (q->isEmpty == 1)
-        {
-            q->total_waiting++;
-        }
+        q->total_waiting--;
     }
-
-    // Dequeues item and increments start of queue
+    // gcc -fsanitize=address,undefined ww.c file_queue.c unbounded_queue.c
+    //./a.out -r1000,1000 15 foldera
+    //  Dequeues item and increments start of queue
     if (DEBUG)
         printf("Dequeueing \'%s\'...\n", *n);
     *n = q->names[q->start];
@@ -130,7 +138,7 @@ int unbound_dequeue(char **n, struct unbounded_queue *q)
         q->isEmpty = 1;
     }
     pthread_mutex_unlock(&q->lock);
-    return 0;
+    return 1;
 }
 
 // Prints out all elements within the queue for testing

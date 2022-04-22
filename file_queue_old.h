@@ -15,7 +15,6 @@
 struct file_queue
 {
     char **names;
-    char **wraps;
     int start, stop;
     int isEmpty;
     int dir_finished;
@@ -25,6 +24,6 @@ struct file_queue
 
 int file_init(struct file_queue *q);
 int file_destroy(struct file_queue *q);
-int file_enqueue(char *n, char *m, struct file_queue *q);
-int file_dequeue(char **n, char **m, struct file_queue *q);
+int file_enqueue(char *n, struct file_queue *q);
+int file_dequeue(char **n, struct file_queue *q);
 void file_print(struct file_queue *q);

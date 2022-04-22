@@ -17,10 +17,11 @@ struct unbounded_queue
     char **names;
     int start, stop;
     int isEmpty;
+    int closed;
     int dir_finished;
     int total_waiting;
     int thread_count;
-    pthread_mutex_t lock ,lock2;
+    pthread_mutex_t lock, lock2;
     pthread_cond_t dequeue_ready;
 };
 

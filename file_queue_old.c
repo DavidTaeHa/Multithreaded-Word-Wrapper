@@ -17,11 +17,9 @@ int file_init(struct file_queue *q)
     q->isEmpty = 1;
     q->dir_finished = 0;
     q->names = malloc(sizeof(char *) * MAXSIZE);
-    q->wraps = malloc(sizeof(char *) * MAXSIZE);
     for (int i = 0; i < MAXSIZE; i++)
     {
         q->names[i] = NULL;
-        q->wraps[i] = NULL;
     }
     pthread_mutex_init(&q->lock, NULL);
     pthread_mutex_init(&q->lock2, NULL);
@@ -38,19 +36,15 @@ int file_destroy(struct file_queue *q)
         {
             free(q->names[i]);
         }
-        if(q->wraps[i] != NULL){
-            free(q->wraps[i]);
-        }
     }
     free(q->names);
-    free(q->wraps);
     pthread_mutex_destroy(&q->lock);
     pthread_mutex_destroy(&q->lock2);
     pthread_cond_destroy(&q->dequeue_ready);
 }
 
 // Adds name to the queue
-int file_enqueue(char *n, char *m, struct file_queue *q)
+int file_enqueue(char *n, struct file_queue *q)
 {
     pthread_mutex_lock(&q->lock);
     int return_result = 1;
@@ -65,11 +59,9 @@ int file_enqueue(char *n, char *m, struct file_queue *q)
 
         // Doubles size of queue
         q->names = realloc(q->names, 2 * MAXSIZE * sizeof(char *));
-        q->wraps = realloc(q->wraps, 2 * MAXSIZE * sizeof(char *));
         for (int i = MAXSIZE; i < (MAXSIZE * 2); i++)
         {
             q->names[i] = NULL;
-            q->wraps[i] = NULL;
         }
 
         // Add the new bigger queue to the struct
@@ -78,7 +70,6 @@ int file_enqueue(char *n, char *m, struct file_queue *q)
 
     // Adds item to the queue and increments end of queue
     q->names[q->stop] = n;
-    q->wraps[q->stop] = m;
     q->stop++;
     q->isEmpty = 0;
     return_result = 0;
@@ -88,7 +79,7 @@ int file_enqueue(char *n, char *m, struct file_queue *q)
 }
 
 // Dequeues names from the queue
-int file_dequeue(char **n, char **m, struct file_queue *q)
+int file_dequeue(char **n, struct file_queue *q)
 {
     pthread_mutex_lock(&q->lock);
 
@@ -107,7 +98,6 @@ int file_dequeue(char **n, char **m, struct file_queue *q)
 
     // Dequeues item and increments start of queue
     *n = q->names[q->start];
-    *m = q->wraps[q->start];
     q->start++;
     // Checks if queue is empty
     if (q->stop == q->start)

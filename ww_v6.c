@@ -30,24 +30,24 @@ int finished = 0;
 int Mthread = 0;
 int Nthread = 0;
 
-char *mystrsep(char **stringp, const char *delim)
+char* mystrsep(char** stringp, const char* delim)
 {
-    char *start = *stringp;
-    char *p;
+  char* start = *stringp;
+  char* p;
 
-    p = (start != NULL) ? strpbrk(start, delim) : NULL;
+  p = (start != NULL) ? strpbrk(start, delim) : NULL;
 
-    if (p == NULL)
-    {
-        *stringp = NULL;
-    }
-    else
-    {
-        *p = '\0';
-        *stringp = p + 1;
-    }
+  if (p == NULL)
+  {
+    *stringp = NULL;
+  }
+  else
+  {
+    *p = '\0';
+    *stringp = p + 1;
+  }
 
-    return start;
+  return start;
 }
 
 void wrap_file(int file_in, int file_out)
@@ -207,28 +207,16 @@ void procDir(char *a, struct unbounded_queue *q, struct file_queue *r)
         newpath[plen] = '/';
         memcpy(newpath + plen + 1, file, flen + 1);
 
-        // char *newfile = malloc(strlen(newpath) + 6);
-
         // && strstr(de->d_name, "wrap.") != de->d_name && strstr(de->d_name, ".txt") && de->d_name[0] != '.'
         if (stat(newpath, &temp) != -1 && de->d_name[0] != '.')
         {
             if (S_ISREG(temp.st_mode) && strstr(de->d_name, "wrap.") != de->d_name && strstr(de->d_name, ".txt"))
             {
-                char *wrap = (char *)malloc(flen + 6);
-                strcpy(wrap, "wrap.");
-                strcat(wrap, file);
-                int wlen = strlen(wrap);
-                char *newfile = malloc(plen + wlen + 2);
-                memcpy(newfile, path, plen);
-                newfile[plen] = '/';
-                memcpy(newfile + plen + 1, wrap, wlen + 1);
-                free(wrap);
-
-                int val = file_enqueue(newpath, newfile, r);
+                // printf("%s\n", newpath);
+                int val = file_enqueue(newpath, r);
                 if (val == 1)
                 {
                     free(newpath);
-                    free(newfile);
                 }
                 // free(newpath);
                 // NOTE: add code to add the text file path to the file queue and remove free statement later
@@ -261,41 +249,35 @@ void *directory_worker(void *args)
 {
     char *dir_name;
     // Work on the directory queue while it is not empty or the number of waiting threads is less than total threads
-    while (unbound_dequeue(&dir_name, dir_queue) == 1)
+    while (dir_queue->isEmpty == 0 || dir_queue->total_waiting < Mthread)
     {
-        /*
+        unbound_dequeue(&dir_name, dir_queue);
         if (dir_queue->isEmpty == 1 && dir_queue->total_waiting == Mthread)
         {
             printf("DIRECTORY QUEUE FINISHED!\n");
             break;
         }
-        */
         procDir(dir_name, dir_queue, file_queue);
         // unbound_print(dir_queue);
         // unbound_print(file_queue);
-        // printf("Worker Waiting: %d\n", dir_queue->total_waiting);
-        // printf("Worker Empty Status: %d\n", dir_queue->isEmpty);
-        // printf("Worker closed Status: %d\n", dir_queue->closed);
+        //  printf("Worker Waiting: %d\n", dir_queue->total_waiting);
+        //  printf("Worker Empty Status: %d\n", dir_queue->isEmpty);
     }
-    /*
     finished++;
-    printf("Finished: %d\n", finished);
     if (finished == Mthread)
     {
         file_queue->dir_finished = 1;
         pthread_cond_broadcast(&file_queue->dequeue_ready);
         printf("ALL DIRECTORY THREADS FINISH!\n");
     }
-    */
 }
 
 void *file_worker(void *args)
 {
     char *file_name;
-    char *wrap_name;
     while (file_queue->dir_finished == 0 || file_queue->isEmpty == 0)
     {
-        file_dequeue(&file_name, &wrap_name, file_queue);
+        file_dequeue(&file_name, file_queue);
         if (file_queue->dir_finished == 1 && file_queue->isEmpty == 1)
         {
             pthread_cond_broadcast(&file_queue->dequeue_ready);
@@ -304,9 +286,60 @@ void *file_worker(void *args)
         printf("--------INPUT FILE: %s\n", file_name);
         int inText = open(file_name, O_RDONLY);
 
-        printf("--------OUTPUT: %s\n", wrap_name);
+        char *token;
+        char *last;
+        char temp[4096];
+        char temp2[4096];
+        char filename_cpy[4096];
+        memset(temp,0,sizeof(temp));
+        memset(temp2,0,sizeof(temp2));
+        memset(filename_cpy,0,sizeof(filename_cpy));
 
-        int outText = open(wrap_name, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
+        strcpy(filename_cpy, file_name);
+        printf("FILE LENGTH: %d\n", strlen(file_name));
+        token = strtok(filename_cpy, "/");
+
+        strcat(temp, token);
+        while (token != NULL)
+        {
+            strcat(temp, "/");
+            token = strtok(NULL, "/");
+            if (token != NULL)
+            {
+                strcat(temp, token);
+                last = token;
+            }
+        }
+
+        token = strtok(temp, "/");
+        strcat(temp2, token);
+        while (token != NULL)
+        {
+            token = strtok(NULL, "/");
+            if (token != NULL)
+            {
+                strcat(temp2, "/");
+                if (strcmp(last, token) != 0)
+                {
+                    strcat(temp2, token);
+                }
+            }
+        }
+
+        char temp3[4096];
+        char temp4[4096];
+        memset(temp3,0,sizeof(temp3));
+        memset(temp4,0,sizeof(temp4));
+
+        strcat(temp3, "wrap.");
+        strcat(temp3, last);
+        strcat(temp4, temp2);
+        strcat(temp4, temp3);
+
+        printf("%s\n", last);
+        printf("--------OUTPUT: %s\n", temp4);
+
+        int outText = open(temp4, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
         wrap_file(inText, outText);
         close(inText);
         close(outText);
@@ -314,8 +347,7 @@ void *file_worker(void *args)
     printf("!!!!!!!!!!!!!!!!!!!!!!!!\n");
 }
 
-void threadInit(char *a)
-{
+void threadInit(char *a){
     pthread_t tidsM[Mthread];
     pthread_t tidsN[Nthread];
     dir_queue = malloc(sizeof(struct unbounded_queue));
@@ -333,25 +365,16 @@ void threadInit(char *a)
 
     unbound_enqueue(newpath, dir_queue);
 
-    for (int i = 0; i < Mthread; i++)
-    {
+    for(int i = 0; i < Mthread; i++){
         pthread_create(&tidsM[i], NULL, directory_worker, dir_queue);
     }
-    for (int i = 0; i < Nthread; i++)
-    {
+    for(int i = 0; i < Nthread; i++){
         pthread_create(&tidsN[i], NULL, file_worker, file_queue);
     }
-    for (int i = 0; i < Mthread; i++)
-    {
+    for(int i = 0; i < Mthread; i++){
         pthread_join(tidsM[i], NULL);
     }
-
-    file_queue->dir_finished = 1;
-    pthread_cond_broadcast(&file_queue->dequeue_ready);
-    printf("ALL DIRECTORY THREADS FINISHED...\n");
-
-    for (int i = 0; i < Nthread; i++)
-    {
+    for(int i = 0; i < Nthread; i++){
         pthread_join(tidsN[i], NULL);
     }
 
@@ -371,84 +394,67 @@ int main(int argc, char **argv)
         printf("Incorrect number of arguments\n");
         exit(EXIT_FAILURE);
     }
-
+    
     int checker;
-    // Parse argv[1] and assign
-    if (strncmp(argv[1], "-r", 2))
-    {
-        checker = 0;
+    // Parse argv[1] and assign 
+    if(strncmp(argv[1], "-r", 2)){
+      checker = 0;
     }
-    else
-    {
+    else{
         checker = 1;
     }
 
-    if (checker == 1)
-    {
+    if(checker == 1){
         // Accounts for -r by creating -r1,1
-        if (!strncmp(argv[1], "-r", 3))
-        {
-            if (DEBUG)
-            {
+        if(!strncmp(argv[1], "-r", 3)){
+            if(DEBUG){
                 printf("Argument inputed as -r\n");
             }
             Mthread = Nthread = 1;
         }
-        else
-        {
+        else{
             char *token1, *token2;
-            while ((token1 = mystrsep(&argv[1], "-r")) != NULL)
-            {
-                while ((token2 = mystrsep(&token1, ",")) != NULL)
-                {
-                    if (!Mthread)
-                    {
+            while((token1 = mystrsep(&argv[1], "-r")) !=  NULL){
+                while((token2 = mystrsep(&token1, ",")) !=  NULL){
+                    if(!Mthread){
                         Mthread = atoi(token2);
                     }
-                    else
-                    {
+                    else{
                         Nthread = atoi(token2);
                     }
                 }
             }
             // Accounts for -rN by creating -r1,N
-            if (Nthread == 0)
-            {
+            if(Nthread == 0){
                 Nthread = Mthread;
                 Mthread = 1;
             }
-            if (DEBUG)
-            {
-                if (Mthread)
-                {
+            if(DEBUG){
+                if(Mthread){
                     printf("DB: Value of M: %d\n", Mthread);
                 }
-                if (Nthread)
-                {
+                if(Nthread){
                     printf("DB: Value of N: %d\n", Nthread);
                 }
             }
         }
-        if (Nthread == 0)
-        {
+        if(Nthread == 0){
             Nthread = 1;
         }
     }
 
-    if (checker == 0)
-    {
-        // Checks if argv[1] is a positive number
-        if (!isdigit((char)argv[1][0]))
+    if(checker == 0){
+        //Checks if argv[1] is a positive number
+        if(!isdigit((char) argv[1][0]))
         {
             printf("Invalid width value.\n");
             exit(EXIT_FAILURE);
         }
         columns = atoi(argv[1]);
     }
-    else
-    {
-        // Checks if argv[2] is a positive number
-        if (!isdigit((char)argv[2][0]))
+    else{
+        //Checks if argv[2] is a positive number
+        if(!isdigit((char) argv[2][0]))
         {
             printf("Invalid width value.\n");
             exit(EXIT_FAILURE);
@@ -456,8 +462,7 @@ int main(int argc, char **argv)
         columns = atoi(argv[2]);
     }
 
-    if (checker == 0)
-    {
+    if(checker == 0){
         struct stat temp;
         // If second argument is an existing file or directory
         if (stat(argv[2], &temp) != -1)
@@ -531,7 +536,7 @@ int main(int argc, char **argv)
             strcat(tempName, ".txt");
             free(tempNum);
 
-            // Reads from stdin and prints out to a temp file
+            //Reads from stdin and prints out to a temp file
             int outText = open(tempName, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
             read(0, userStr, INPTSIZE);
             userStr[strlen(userStr)] = '\0';
@@ -549,8 +554,7 @@ int main(int argc, char **argv)
                 wrap_file(inText, 1);
                 close(inText);
             }
-            else
-            {
+            else{
                 perror(tempName);
                 exit(EXIT_FAILURE);
             }
@@ -572,16 +576,12 @@ int main(int argc, char **argv)
             exitCode = EXIT_FAILURE;
         }
     }
-    else
-    {
-        if (DEBUG)
-        {
-            printf("DB: M = %d, N = %d\n", Mthread, Nthread);
-        }
+    else{
+        if(DEBUG){
+			printf("DB: M = %d, N = %d\n", Mthread, Nthread);
+		}
         printf("DB: M = %d, N = %d\n", Mthread, Nthread);
         threadInit(argv[3]);
     }
     return exitCode;
 }
-
-// gcc ww.c unbounded_queue.c file_queue.c
