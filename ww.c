@@ -323,9 +323,7 @@ void *file_worker(void *args)
         }
         //printf("--------INPUT FILE: %s\n", file_name);
         int inText = open(file_name, O_RDONLY);
-
         //printf("--------OUTPUT: %s\n", wrap_name);
-
         int outText = open(wrap_name, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
         wrap_file(inText, outText);
         close(inText);
@@ -456,6 +454,49 @@ int main(int argc, char **argv)
         }
     }
 
+    if (argc == 2)
+    {
+        struct stat temp;
+        char userStr[INPTSIZE];
+
+        // Creating a temporary file
+        char tempName[INPTSIZE];
+        char tempNum[INPTSIZE];
+        strcpy(tempName, "temp");
+        srand(time(NULL));
+        int nameNum = rand() % (99999 - 10000) + 10000;
+        sprintf(tempNum, "%d", nameNum);
+        strcat(tempName, tempNum);
+        strcat(tempName, ".txt");
+
+        // Reads from stdin and prints out to a temp file
+        int outText = open(tempName, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
+        read(0, userStr, INPTSIZE);
+        userStr[strlen(userStr)] = '\0';
+        write(outText, userStr, strlen(userStr));
+
+        // If the file exists proceed
+        if ((stat(tempName, &temp) != -1))
+        {
+            if (DEBUG)
+            {
+                printf("\nTemporary file '%s' wrapped to STDOUT\n", tempName);
+            }
+            int inText = open(tempName, O_RDONLY);
+            wrap_file(inText, 1);
+            close(inText);
+        }
+        else
+        {
+            perror(tempName);
+            exit(EXIT_FAILURE);
+        }
+        // Remove temporary file as it is no longer needed and should not exist.
+        close(outText);
+        remove(tempName);
+        return exitCode;
+    }
+
     if (checker == 0)
     {
         // Checks if argv[1] is a positive number
@@ -537,49 +578,6 @@ int main(int argc, char **argv)
             }
         }
         // If second arguments file name does not exist read from STDIN
-        else if (argc == 2)
-        {
-            char *userStr = malloc(sizeof(char) * INPTSIZE);
-
-            // Creating a temporary file
-            char *tempName = malloc(sizeof(char) * 11);
-            char *tempNum = malloc(sizeof(char) * 6);
-            strcpy(tempName, "temp");
-            srand(time(NULL));
-            int nameNum = rand() % (99999 - 10000) + 10000;
-            sprintf(tempNum, "%d", nameNum);
-            strcat(tempName, tempNum);
-            strcat(tempName, ".txt");
-            free(tempNum);
-
-            // Reads from stdin and prints out to a temp file
-            int outText = open(tempName, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
-            read(0, userStr, INPTSIZE);
-            userStr[strlen(userStr)] = '\0';
-            write(outText, userStr, strlen(userStr));
-            free(userStr);
-
-            // If the file exists proceed
-            if ((stat(tempName, &temp) != -1))
-            {
-                if (DEBUG)
-                {
-                    printf("\nTemporary file '%s' wrapped to STDOUT\n", tempName);
-                }
-                int inText = open(tempName, O_RDONLY);
-                wrap_file(inText, 1);
-                close(inText);
-            }
-            else
-            {
-                perror(tempName);
-                exit(EXIT_FAILURE);
-            }
-            // Remove temporary file as it is no longer needed and should not exist.
-            close(outText);
-            remove(tempName);
-            free(tempName);
-        }
         else
         {
             if (argc > 3 || argc < 2)
