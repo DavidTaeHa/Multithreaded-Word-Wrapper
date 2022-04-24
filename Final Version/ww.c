@@ -295,17 +295,17 @@ void *file_worker(void *args)
     char *wrap_name;
     while (file_dequeue(&file_name, &wrap_name, file_queue) == 1)
     {
-        // printf("--------INPUT FILE: %s\n", file_name);
+        //printf("--------INPUT FILE: %s\n", file_name);
         int inText = open(file_name, O_RDONLY);
 
-        // printf("--------OUTPUT: %s\n", wrap_name);
+        //printf("--------OUTPUT: %s\n", wrap_name);
 
         int outText = open(wrap_name, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
         wrap_file(inText, outText);
         close(inText);
         close(outText);
     }
-    // printf("!!!!!!!!!!!!!!!!!!!!!!!!\n");
+    //printf("!!!!!!!!!!!!!!!!!!!!!!!!\n");
 }
 
 /*
@@ -519,7 +519,7 @@ int main(int argc, char **argv)
     }
 
     int currArg;
-    if (checker == 0)
+    if(checker == 0)
     {
         currArg = 2;
     }
@@ -533,7 +533,7 @@ int main(int argc, char **argv)
         struct stat temp;
         char topDir[INPTSIZE];
         getcwd(topDir, INPTSIZE);
-        for (currArg; currArg < argc; currArg++)
+        for(currArg; currArg < argc; currArg++)
         {
             // If second argument is an existing file or directory
             if (stat(argv[currArg], &temp) != -1)
@@ -548,11 +548,11 @@ int main(int argc, char **argv)
                     char *newDir = calloc(strlen(argv[currArg]) + 1, sizeof(char));
                     char *fToken, fTokenCpy[INPTSIZE];
                     int zSlash = 0, zSkip = 0;
-                    while ((fToken = mystrsep(&argv[currArg], "/")) != NULL)
+                    while((fToken = mystrsep(&argv[currArg], "/")) != NULL)
                     {
-                        if (zSkip == 1)
+                        if(zSkip == 1)
                         {
-                            if (zSlash == 1)
+                            if(zSlash == 1)
                             {
                                 strcat(newDir, "/");
                             }
@@ -620,12 +620,12 @@ int main(int argc, char **argv)
             }
         }
     }
-    else if (Mthread == 1 && Nthread == 1)
+    else if(Mthread == 1 && Nthread == 1)
     {
         struct stat temp;
         char topDir[INPTSIZE];
         getcwd(topDir, INPTSIZE);
-        for (currArg; currArg < argc; currArg++)
+        for(currArg; currArg < argc; currArg++)
         {
             // If second argument is an existing file or directory
             if (stat(argv[currArg], &temp) != -1)
@@ -640,11 +640,11 @@ int main(int argc, char **argv)
                     char *newDir = calloc(strlen(argv[currArg]) + 1, sizeof(char));
                     char *fToken, fTokenCpy[INPTSIZE];
                     int zSlash = 0, zSkip = 0;
-                    while ((fToken = mystrsep(&argv[currArg], "/")) != NULL)
+                    while((fToken = mystrsep(&argv[currArg], "/")) != NULL)
                     {
-                        if (zSkip == 1)
+                        if(zSkip == 1)
                         {
-                            if (zSlash == 1)
+                            if(zSlash == 1)
                             {
                                 strcat(newDir, "/");
                             }
