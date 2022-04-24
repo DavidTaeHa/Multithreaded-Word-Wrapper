@@ -95,9 +95,9 @@ int file_dequeue(char **n, char **m, struct file_queue *q)
     // Currently queue is empty and must wait
     while (q->isEmpty == 1)
     {
-        if (q->dir_finished == 1 && q->isEmpty)
+        if (q->dir_finished == 1)
         {
-            printf("One File Thread Terminating...\n");
+            //printf("One File Thread Terminating...\n");
             pthread_cond_broadcast(&q->dequeue_ready);
             pthread_mutex_unlock(&q->lock);
             return 0;
@@ -115,7 +115,7 @@ int file_dequeue(char **n, char **m, struct file_queue *q)
         q->isEmpty = 1;
     }
     pthread_mutex_unlock(&q->lock);
-    return 0;
+    return 1;
 }
 
 // Prints out all elements within the queue for testing

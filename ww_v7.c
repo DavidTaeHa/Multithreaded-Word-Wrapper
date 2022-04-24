@@ -30,21 +30,21 @@ int finished = 0;
 int Mthread = 0;
 int Nthread = 0;
 
-char *mystrsep(char **stringp, const char *delim)
+char *mystrsep(char **strp, const char *d)
 {
-    char *start = *stringp;
+    char *start = *strp;
     char *p;
 
-    p = (start != NULL) ? strpbrk(start, delim) : NULL;
+    p = (start != NULL) ? strpbrk(start, d) : NULL;
 
     if (p == NULL)
     {
-        *stringp = NULL;
+        *strp = NULL;
     }
     else
     {
         *p = '\0';
-        *stringp = p + 1;
+        *strp = p + 1;
     }
 
     return start;
@@ -293,26 +293,6 @@ void *file_worker(void *args)
 {
     char *file_name;
     char *wrap_name;
-    while (file_dequeue(&file_name, &wrap_name, file_queue) == 1)
-    {
-        //printf("--------INPUT FILE: %s\n", file_name);
-        int inText = open(file_name, O_RDONLY);
-
-        //printf("--------OUTPUT: %s\n", wrap_name);
-
-        int outText = open(wrap_name, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
-        wrap_file(inText, outText);
-        close(inText);
-        close(outText);
-    }
-    //printf("!!!!!!!!!!!!!!!!!!!!!!!!\n");
-}
-
-/*
-void *file_worker(void *args)
-{
-    char *file_name;
-    char *wrap_name;
     while (file_queue->dir_finished == 0 || file_queue->isEmpty == 0)
     {
         file_dequeue(&file_name, &wrap_name, file_queue);
@@ -321,19 +301,18 @@ void *file_worker(void *args)
             pthread_cond_broadcast(&file_queue->dequeue_ready);
             break;
         }
-        //printf("--------INPUT FILE: %s\n", file_name);
+        printf("--------INPUT FILE: %s\n", file_name);
         int inText = open(file_name, O_RDONLY);
 
-        //printf("--------OUTPUT: %s\n", wrap_name);
+        printf("--------OUTPUT: %s\n", wrap_name);
 
         int outText = open(wrap_name, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
         wrap_file(inText, outText);
         close(inText);
         close(outText);
     }
-    //printf("!!!!!!!!!!!!!!!!!!!!!!!!\n");
+    printf("!!!!!!!!!!!!!!!!!!!!!!!!\n");
 }
-*/
 
 void threadInit(char *a)
 {
@@ -368,8 +347,8 @@ void threadInit(char *a)
     }
 
     file_queue->dir_finished = 1;
-    //pthread_cond_broadcast(&file_queue->dequeue_ready);
-    //printf("ALL DIRECTORY THREADS FINISHED...\n");
+    pthread_cond_broadcast(&file_queue->dequeue_ready);
+    printf("ALL DIRECTORY THREADS FINISHED...\n");
 
     for (int i = 0; i < Nthread; i++)
     {
@@ -387,7 +366,8 @@ void threadInit(char *a)
 
 int main(int argc, char **argv)
 {
-    if (argc > 4 || argc < 2)
+    // Check for absolute minimal arguments required
+    if (argc < 2)
     {
         printf("Incorrect number of arguments\n");
         exit(EXIT_FAILURE);
@@ -406,6 +386,11 @@ int main(int argc, char **argv)
 
     if (checker == 1)
     {
+        // Check for minimal arguments required in the event of establishing multithreading
+        if(argc <= 3){
+            printf("Incorrect number of arguments\n");
+            exit(EXIT_FAILURE);
+        }
         // Accounts for -r by creating -r1,1
         if (!strncmp(argv[1], "-r", 3))
         {
@@ -461,7 +446,7 @@ int main(int argc, char **argv)
         // Checks if argv[1] is a positive number
         if (!isdigit((char)argv[1][0]))
         {
-            printf("Invalid width value.\n");
+            printf("Invalid argument at positon 1:\n\tRequires positive width value or establish multithreading using forms '-r', '-rN', '-rM,N'.\n");
             exit(EXIT_FAILURE);
         }
         columns = atoi(argv[1]);
@@ -479,66 +464,9 @@ int main(int argc, char **argv)
 
     if (checker == 0)
     {
-        struct stat temp;
-        // If second argument is an existing file or directory
-        if (stat(argv[2], &temp) != -1)
+        if (argc == 2)
         {
-            // Second argument is a file that exists
-            if (S_ISREG(temp.st_mode))
-            {
-                if (DEBUG)
-                {
-                    printf("\nFile '%s' wrapped to STDOUT\n", argv[2]);
-                }
-                int inText = open(argv[2], O_RDONLY);
-                wrap_file(inText, 1);
-                close(inText);
-            }
-            // Second argument is a directory that exists
-            else if (S_ISDIR(temp.st_mode))
-            {
-                if (DEBUG)
-                {
-                    printf("\nWrapping files in directory '%s'\n", argv[2]);
-                }
-                struct dirent *f;
-                DIR *fd = opendir(argv[2]);
-                chdir(argv[2]);
-                int count = 1;
-                while ((f = readdir(fd)) != NULL)
-                {
-                    if (f->d_name[0] == '.')
-                    {
-                        printf("Skipping: '%s'\n", f->d_name);
-                    }
-                    else if (strstr(f->d_name, "wrap.") == f->d_name)
-                    {
-                        printf("File to overwrite: '%s'\n", f->d_name);
-                    }
-                    else if (strstr(f->d_name, ".txt"))
-                    {
-                        int inText = open(f->d_name, O_RDONLY);
-                        char *newFile = calloc(strlen(f->d_name) + 6, sizeof(char));
-                        strcpy(newFile, "wrap.");
-                        strcat(newFile, f->d_name);
-                        if (DEBUG)
-                        {
-                            printf("\n%d: Wrapping file '%s' to '%s'\n", count, f->d_name, newFile);
-                        }
-                        int outText = open(newFile, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
-                        wrap_file(inText, outText);
-                        close(inText);
-                        close(outText);
-                        free(newFile);
-                        count++;
-                    }
-                }
-                closedir(fd);
-            }
-        }
-        // If second arguments file name does not exist read from STDIN
-        else if (argc == 2)
-        {
+            struct stat temp;
             char *userStr = malloc(sizeof(char) * INPTSIZE);
 
             // Creating a temporary file
@@ -567,7 +495,7 @@ int main(int argc, char **argv)
                     printf("\nTemporary file '%s' wrapped to STDOUT\n", tempName);
                 }
                 int inText = open(tempName, O_RDONLY);
-                wrap_file(inText, 1);
+                 wrap_file(inText, 1);
                 close(inText);
             }
             else
@@ -580,17 +508,96 @@ int main(int argc, char **argv)
             remove(tempName);
             free(tempName);
         }
-        else
-        {
-            if (argc > 3 || argc < 2)
-            {
-                printf("Error: Not enough arguments");
+        else{
+            for(int currArg = 2; currArg < argc + 1; currArg++){
+                struct stat temp;
+                // If second argument is an existing file or directory
+                if (stat(argv[currArg], &temp) != -1)
+                {
+                    // Second argument is a file that exists
+                    if (S_ISREG(temp.st_mode))
+                    {
+                        if (DEBUG)
+                        {
+                            printf("\nFile '%s' wrapped\n", argv[currArg]);
+                        }
+                        char topDir[INPTSIZE];
+                        getcwd(topDir, INPTSIZE);
+                        char *tempArg = calloc(strlen(argv[currArg]), sizeof(char));
+                        tempArg = strcpy(tempArg, argv[currArg]);
+                        char *newDir = calloc(strlen(tempArg), sizeof(char));
+                        char *fToken, fTokenCpy[INPTSIZE];
+                        int zSlash = 0, zSkip = 0;
+                        while((fToken = mystrsep(&tempArg, "/")) != NULL){
+                            if(zSkip == 1){
+                                if(zSlash == 1){
+                                    strcat(newDir, "/");
+                                }
+                                strcat(newDir, fTokenCpy);
+                                zSlash = 1;
+                            }
+                            strcpy(fTokenCpy, fToken);
+                            zSkip = 1;
+                        }
+                        chdir(newDir);
+                        char *newFile = calloc(strlen(fTokenCpy) + 6, sizeof(char));
+                        strcat(newFile, "wrap.");
+                        strcat(newFile, fTokenCpy);
+                        int inText = open(fTokenCpy, O_RDONLY);
+                        int outText = open(newFile, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
+                        wrap_file(inText, outText);
+                        close(inText);
+                        close(outText);
+                        free(newDir);
+                        free(newFile);
+                        chdir(topDir);
+                    }
+                    // Second argument is a directory that exists
+                    else if (S_ISDIR(temp.st_mode))
+                    {
+                        if (DEBUG)
+                        {
+                            printf("\nWrapping files in directory '%s'\n", argv[currArg]);
+                        }
+                        struct dirent *f;
+                        DIR *fd = opendir(argv[currArg]);
+                        char topDir[INPTSIZE];
+                        getcwd(topDir, INPTSIZE);
+                        chdir(argv[currArg]);
+                        int count = 1;
+                        while ((f = readdir(fd)) != NULL)
+                        {
+                            if (f->d_name[0] == '.')
+                            {
+                                printf("Skipping: '%s'\n", f->d_name);
+                            }
+                            else if (strstr(f->d_name, "wrap.") == f->d_name)
+                            {
+                                printf("File to overwrite: '%s'\n", f->d_name);
+                            }
+                            else if (strstr(f->d_name, ".txt"))
+                            {
+                                int inText = open(f->d_name, O_RDONLY);
+                                char *newFile = calloc(strlen(f->d_name) + 6, sizeof(char));
+                                strcpy(newFile, "wrap.");
+                                strcat(newFile, f->d_name);
+                                if (DEBUG)
+                                {
+                                    printf("\n%d: Wrapping file '%s' to '%s'\n", count, f->d_name, newFile);
+                                }
+                                int outText = open(newFile, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
+                                wrap_file(inText, outText);
+                                close(inText);
+                                close(outText);
+                                free(newFile);
+                                count++;
+                            }
+                        }
+                        chdir(topDir);
+                        closedir(fd);
+                    }
+                }
             }
-            else if ((stat(argv[2], &temp) == -1))
-            {
-                perror(argv[2]);
-            }
-            exitCode = EXIT_FAILURE;
         }
     }
     else
@@ -606,4 +613,3 @@ int main(int argc, char **argv)
 }
 
 // gcc ww.c unbounded_queue.c file_queue.c
-// ./a.exe '-r100,100' 80 foldera

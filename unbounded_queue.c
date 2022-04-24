@@ -115,7 +115,7 @@ int unbound_dequeue(char **n, struct unbounded_queue *q)
         }
         if (q->total_waiting == q->thread_count)
         {
-            printf("WAITING EQUALS THREAD COUNT\n");
+            //printf("WAITING EQUALS THREAD COUNT\n");
             q->closed = 1;
             pthread_cond_broadcast(&q->dequeue_ready);
             pthread_mutex_unlock(&q->lock);
