@@ -366,8 +366,8 @@ void threadInit(char *a)
     }
 
     file_queue->dir_finished = 1;
-    //pthread_cond_broadcast(&file_queue->dequeue_ready);
-    //printf("ALL DIRECTORY THREADS FINISHED...\n");
+    pthread_cond_broadcast(&file_queue->dequeue_ready);
+    printf("ALL DIRECTORY THREADS FINISHED...\n");
 
     for (int i = 0; i < Nthread; i++)
     {
@@ -385,7 +385,7 @@ void threadInit(char *a)
 
 int main(int argc, char **argv)
 {
-    if (argc > 4 || argc < 2)
+    if (argc < 2)
     {
         printf("Incorrect number of arguments\n");
         exit(EXIT_FAILURE);
@@ -454,6 +454,27 @@ int main(int argc, char **argv)
         }
     }
 
+    if (checker == 0)
+    {
+        // Checks if argv[1] is a positive number
+        if (!isdigit((char)argv[1][0]))
+        {
+            printf("Invalid width value.\n");
+            exit(EXIT_FAILURE);
+        }
+        columns = atoi(argv[1]);
+    }
+    else
+    {
+        // Checks if argv[2] is a positive number
+        if (!isdigit((char)argv[2][0]))
+        {
+            printf("Invalid width value.\n");
+            exit(EXIT_FAILURE);
+        }
+        columns = atoi(argv[2]);
+    }
+
     if (argc == 2)
     {
         struct stat temp;
@@ -495,27 +516,6 @@ int main(int argc, char **argv)
         close(outText);
         remove(tempName);
         return exitCode;
-    }
-
-    if (checker == 0)
-    {
-        // Checks if argv[1] is a positive number
-        if (!isdigit((char)argv[1][0]))
-        {
-            printf("Invalid width value.\n");
-            exit(EXIT_FAILURE);
-        }
-        columns = atoi(argv[1]);
-    }
-    else
-    {
-        // Checks if argv[2] is a positive number
-        if (!isdigit((char)argv[2][0]))
-        {
-            printf("Invalid width value.\n");
-            exit(EXIT_FAILURE);
-        }
-        columns = atoi(argv[2]);
     }
 
     if (checker == 0)
