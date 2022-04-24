@@ -295,17 +295,17 @@ void *file_worker(void *args)
     char *wrap_name;
     while (file_dequeue(&file_name, &wrap_name, file_queue) == 1)
     {
-        //printf("--------INPUT FILE: %s\n", file_name);
+        // printf("--------INPUT FILE: %s\n", file_name);
         int inText = open(file_name, O_RDONLY);
 
-        //printf("--------OUTPUT: %s\n", wrap_name);
+        // printf("--------OUTPUT: %s\n", wrap_name);
 
         int outText = open(wrap_name, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
         wrap_file(inText, outText);
         close(inText);
         close(outText);
     }
-    //printf("!!!!!!!!!!!!!!!!!!!!!!!!\n");
+    // printf("!!!!!!!!!!!!!!!!!!!!!!!!\n");
 }
 
 /*
